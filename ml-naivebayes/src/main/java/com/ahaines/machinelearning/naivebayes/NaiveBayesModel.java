@@ -20,13 +20,13 @@ import com.google.common.collect.Maps;
 public class NaiveBayesModel<Classification extends Enum<Classification>> implements Model{
 
 	private final Map<Classification, Double> priorClassificationProbabilities;
-	private final Map<Classification, Map<FeatureDefinition, Double>> posteriorProbilities;
+	private final Map<Classification, Map<FeatureDefinition, Double>> likelihoodProbilities;
 	private final Map<FeatureDefinition, Double> priorFeatureProbabilities;
 	private final Metrics metrics;
 	
-	public NaiveBayesModel(Map<Classification, Double> priorProbabilities, Map<Classification, Map<FeatureDefinition, Double>> posteriorProbilities, Map<FeatureDefinition, Double> priorFeatureProbabilities){
-		this.priorClassificationProbabilities = Collections.unmodifiableMap(priorProbabilities);
-		this.posteriorProbilities = Collections.unmodifiableMap(posteriorProbilities);
+	public NaiveBayesModel(Map<Classification, Double> priorClassificationProbabilities, Map<Classification, Map<FeatureDefinition, Double>> likelihoodProbilities, Map<FeatureDefinition, Double> priorFeatureProbabilities){
+		this.priorClassificationProbabilities = Collections.unmodifiableMap(priorClassificationProbabilities);
+		this.likelihoodProbilities = Collections.unmodifiableMap(likelihoodProbilities);
 		this.metrics = new Metrics();
 		this.priorFeatureProbabilities = priorFeatureProbabilities;
 	}
@@ -43,7 +43,7 @@ public class NaiveBayesModel<Classification extends Enum<Classification>> implem
 		for(Classification classification: priorClassificationProbabilities.keySet()){
 			
 			double posteriorProbabilityProduct = 1;
-			Map<FeatureDefinition, Double> givenClassificationProbabilities = posteriorProbilities.get(classification);
+			Map<FeatureDefinition, Double> givenClassificationProbabilities = likelihoodProbilities.get(classification);
 			
 			if (givenClassificationProbabilities != null){ // if we have no probability then do not consider this classification
 		
@@ -151,7 +151,7 @@ public class NaiveBayesModel<Classification extends Enum<Classification>> implem
 			// now calculate the prior and posterior probabilities
 			
 			Map<Classification, Double> priorClassificationProbabilities = new HashMap<Classification, Double>();
-			Map<Classification, Map<FeatureDefinition, Double>> posteriorProbabilities = new HashMap<Classification, Map<FeatureDefinition, Double>>();
+			Map<Classification, Map<FeatureDefinition, Double>> likelihoodProbabilities = new HashMap<Classification, Map<FeatureDefinition, Double>>();
 			Map<FeatureDefinition, Integer> priorFeatureCounts = new HashMap<FeatureDefinition, Integer>();
 			
 			// prior
@@ -186,10 +186,10 @@ public class NaiveBayesModel<Classification extends Enum<Classification>> implem
 					}
 				}
 				
-				posteriorProbabilities.put(posteriorCount.getKey(), featureProbabilities);
+				likelihoodProbabilities.put(posteriorCount.getKey(), featureProbabilities);
 			}
 			
-			return new NaiveBayesModel<Classification>(priorClassificationProbabilities, posteriorProbabilities, new HashMap<FeatureDefinition, Double>(Maps.transformValues(priorFeatureCounts, new Function<Integer, Double>(){
+			return new NaiveBayesModel<Classification>(priorClassificationProbabilities, likelihoodProbabilities, new HashMap<FeatureDefinition, Double>(Maps.transformValues(priorFeatureCounts, new Function<Integer, Double>(){
 				
 				public Double apply(Integer value){
 					return (double)value / (double)totalInstancesSeen;

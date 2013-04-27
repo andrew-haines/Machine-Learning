@@ -31,9 +31,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 public class NaiveBayesModelServiceUnitTest {
 
 	private NaiveBayesModelService<EmailClassification> candidate;
-	
-	private static final Logger LOG = LoggerFactory.getLogger(NaiveBayesModelServiceUnitTest.class);
-	
+
 	private static final FeatureSet.FeatureSetFactory FACTORY = new FeatureSet.FeatureSetFactory(Email.Features.ALL_FEATURE_TYPES);
 	private static final ClassifiedDataset TEST_TRAINING_SET = loadTrainingSet();
 	private static final Dataset<FeatureSet> TEST_SET = loadTestSet();
@@ -80,7 +78,6 @@ public class NaiveBayesModelServiceUnitTest {
 				viagra = Contains.PRESENT;
 			}
 			
-			LOG.debug("adding instance: "+i+", viagra="+viagra+", enlargement="+enlargement);
 			builder.addInstance(createInstance(i, viagra, enlargement));
 			
 			classifications.add(new Classification<EmailClassification>(Identifier.FACTORY.createIdentifier(i), classification));
