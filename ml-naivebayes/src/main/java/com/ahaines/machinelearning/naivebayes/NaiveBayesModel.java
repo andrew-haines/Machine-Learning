@@ -13,6 +13,7 @@ import com.ahaines.machinelearning.api.dataset.Feature;
 import com.ahaines.machinelearning.api.dataset.FeatureDefinition;
 import com.ahaines.machinelearning.api.dataset.FeatureSet;
 import com.ahaines.machinelearning.api.dataset.Identifier;
+import com.ahaines.machinelearning.api.dataset.Feature.Features;
 
 public class NaiveBayesModel<Classification extends Enum<Classification>> implements Model{
 
@@ -125,10 +126,20 @@ public class NaiveBayesModel<Classification extends Enum<Classification>> implem
 				
 				int totalInstancesInClassification = priorCounts.get(posteriorCount.getKey());
 				for (Entry<Class<? extends Feature<?>>, FeatureCounts> featureCount: posteriorCount.getValue().featureCounts.entrySet()){
-					for (Entry<Object, Integer> feature: featureCount.getValue().featureCounts.entrySet()){
+					for (Entry<FeatureDefinition, Integer> feature: featureCount.getValue().featureCounts.entrySet()){
 						double featurePosteriorProbability = (double)feature.getValue() / (double)totalInstancesInClassification;
 						
-						//featureProbabilities.put(new feature.getKey(), featurePosteriorProbability);
+						Feature<?> featureInstance = feature.getKey().getFeature();
+						
+						if (featureInstance == Features.MISSING){
+							// for all features add a count
+							throw new UnsupportedOperationException();
+						} else if (featureInstance instanceof DiscreteFeature){
+							featureProbabilities.put(feature.getKey(), featurePosteriorProbability);
+						} else if (featureInstance instanceof ContinuousFeature){
+							// work out what the ranges are for this split type.
+							throw new UnsupportedOperationException();
+						}
 					}
 				}
 				
@@ -151,29 +162,24 @@ public class NaiveBayesModel<Classification extends Enum<Classification>> implem
 				currentCount = new FeatureCounts();
 			}
 			
-			currentCount.increment(featureValue);
+			currentCount.increment(new FeatureDefinition(featureValue, featureType));
 			
 			featureCounts.put(featureType, currentCount);
 		}
 	}
 	
 	private static class FeatureCounts {
-		private final Map<Object, Integer> featureCounts = new HashMap<Object, Integer>();
+		private final Map<FeatureDefinition, Integer> featureCounts = new HashMap<FeatureDefinition, Integer>();
 		
-		private void increment(Feature<?> featureValue){
-			if (featureValue == Feature.Features.MISSING){ // we assume all of these features are the same likelyhood.
-				for (Entry<Object, Integer> featureCount: featureCounts.entrySet()){
+		private void increment(FeatureDefinition featureValue){
+			if (featureValue.getFeature() == Feature.Features.MISSING){ // we assume all of these features are the same likelyhood.
+				for (Entry<FeatureDefinition, Integer> featureCount: featureCounts.entrySet()){
 					int count = featureCount.getValue();
 					featureCount.setValue(++count);
 				}
 			} else{
 				
-				Object key = null;
-				if (featureValue instanceof DiscreteFeature){
-					key = featureValue.getValue();
-				} else if(featureValue instanceof ContinuousFeature){
-					key = null;
-				}
+				FeatureDefinition key = featureValue;
 				Integer count = featureCounts.get(key);
 				
 				if (count == null){

@@ -37,7 +37,8 @@ public class FeatureDefinition {
 	public String toString(){
 		return ""+featureType.getSimpleName()+": "+feature;
 	}
-	
+
+	@Override
 	public boolean equals(Object obj){
 		if (obj instanceof FeatureDefinition){
 			FeatureDefinition other = (FeatureDefinition)obj;
@@ -46,6 +47,16 @@ public class FeatureDefinition {
 		}
 		
 		return false;
+	}
+	
+	@Override
+	public int hashCode(){
+		int val = 31;
+		
+		val *= featureType.hashCode();
+		val *= feature.hashCode();
+		
+		return val;
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })

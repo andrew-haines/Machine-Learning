@@ -37,6 +37,22 @@ public class Email {
 			public boolean intersects(Feature<Contains> otherFeature) {
 				return getValue() == otherFeature.getValue();
 			}
+			@Override
+			public boolean equals(Object obj) {
+				if (obj instanceof ContainsFeature){
+					ContainsFeature other = (ContainsFeature)obj;
+					
+					return other.getValue().equals(this.getValue());
+				}
+				
+				return false;
+			}
+			
+			@Override
+			public int hashCode(){
+				return value.hashCode();
+			}
+			
 		}
 		
 		public static class ViagraFeature extends ContainsFeature {

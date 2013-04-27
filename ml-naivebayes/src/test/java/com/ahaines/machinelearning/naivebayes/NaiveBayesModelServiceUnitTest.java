@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ahaines.machinelearning.api.dataset.Classification;
 import com.ahaines.machinelearning.api.dataset.ClassifiedDataset;
@@ -29,6 +31,8 @@ import static org.hamcrest.CoreMatchers.equalTo;
 public class NaiveBayesModelServiceUnitTest {
 
 	private NaiveBayesModelService<EmailClassification> candidate;
+	
+	private static final Logger LOG = LoggerFactory.getLogger(NaiveBayesModelServiceUnitTest.class);
 	
 	private static final FeatureSet.FeatureSetFactory FACTORY = new FeatureSet.FeatureSetFactory(Email.Features.ALL_FEATURE_TYPES);
 	private static final ClassifiedDataset TEST_TRAINING_SET = loadTrainingSet();
@@ -69,13 +73,14 @@ public class NaiveBayesModelServiceUnitTest {
 			}
 			
 			if (i > 6 && i < 30){ // 24 viagra ones marked as spam
-				enlargement = Contains.PRESENT;
+				viagra = Contains.PRESENT;
 			}
 			
 			if (i == 45){
-				enlargement = Contains.PRESENT;
+				viagra = Contains.PRESENT;
 			}
 			
+			LOG.debug("adding instance: "+i+", viagra="+viagra+", enlargement="+enlargement);
 			builder.addInstance(createInstance(i, viagra, enlargement));
 			
 			classifications.add(new Classification<EmailClassification>(Identifier.FACTORY.createIdentifier(i), classification));
@@ -98,6 +103,11 @@ public class NaiveBayesModelServiceUnitTest {
 		ClassificationProbability<EmailClassification> classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(1)).getClassification();
 		
 		assertThat(classification.getValue(), is(equalTo(EmailClassification.HAM)));
-		assertThat(classification.getProbability(), is(equalTo(0.5)));
+		assertThat(classification.getProbability(), is(equalTo(0.17168304668304668)));
+		
+		classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(2)).getClassification();
+		
+		assertThat(classification.getValue(), is(equalTo(EmailClassification.SPAM)));
+		//assertThat(classification.getProbability(), is(equalTo(0.928)));
 	}
 }
