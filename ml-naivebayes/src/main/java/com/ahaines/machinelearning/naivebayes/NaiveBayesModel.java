@@ -128,7 +128,7 @@ public class NaiveBayesModel<Classification extends Enum<Classification>> implem
 					for (Entry<Object, Integer> feature: featureCount.getValue().featureCounts.entrySet()){
 						double featurePosteriorProbability = (double)feature.getValue() / (double)totalInstancesInClassification;
 						
-						featureProbabilities.put(new feature.getKey(), featurePosteriorProbability);
+						//featureProbabilities.put(new feature.getKey(), featurePosteriorProbability);
 					}
 				}
 				
