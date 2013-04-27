@@ -15,11 +15,11 @@ import com.google.common.collect.Iterables;
  */
 public class ClassifiedDataset implements Dataset<ClassifiedFeatureSet>{
 
-	private final Dataset<? extends FeatureSet> dataset;
-	private final Map<Identifier, ? extends Classification<?>> classifications;
+	protected final Dataset<? extends FeatureSet> dataset;
+	protected final Map<Identifier, ? extends Classification<?>> classifications;
 	private final Iterable<ClassifiedFeatureSet> instances;
 	
-	private ClassifiedDataset(Dataset<? extends FeatureSet> dataset, final Map<Identifier, ? extends Classification<?>> classifications){
+	protected ClassifiedDataset(Dataset<? extends FeatureSet> dataset, final Map<Identifier, ? extends Classification<?>> classifications){
 		this.dataset = dataset;
 		this.classifications = classifications;
 		

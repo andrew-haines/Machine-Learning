@@ -39,4 +39,9 @@ public class ClassifiedFeatureSet implements FeatureSet{
 	public Iterable<Class<? extends Feature<?>>> getFeatureTypes() {
 		return instance.getFeatureTypes();
 	}
+
+	@Override
+	public Iterable<Feature<?>> getFeatures() {
+		return instance.getFeatures();
+	}
 }

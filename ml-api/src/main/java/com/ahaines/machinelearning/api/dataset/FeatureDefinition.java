@@ -17,6 +17,11 @@ public class FeatureDefinition {
 	}
 	
 	@SuppressWarnings("unchecked")
+	public FeatureDefinition(Feature<?> feature){
+		this(feature, (Class<? extends Feature<?>>)feature.getClass());
+	}
+	
+	@SuppressWarnings("unchecked")
 	public static FeatureDefinition get(Feature<?> feature){
 		return new FeatureDefinition(feature, (Class<? extends Feature<?>>)feature.getClass());
 	}

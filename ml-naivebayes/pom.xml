@@ -2,9 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>ml-dataset-adultearnings</artifactId>
+    <artifactId>ml-naivebayes</artifactId>
     <packaging>jar</packaging>
-    <name>Machine Learning - Dataset - Adult Earnings</name>
+    <name>Machine Learning - Naive Bayes</name>
     <parent>
 		<groupId>com.ahaines.ml</groupId>
 		<artifactId>ml-parent</artifactId>
@@ -18,9 +18,17 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<version>3.0</version>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>ml-api</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
 		</dependency>
+		 <dependency>
+	        <groupId>org.easymock</groupId>
+	        <artifactId>easymock</artifactId>
+	        <version>${easymock.version}</version>
+	        <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

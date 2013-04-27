@@ -25,6 +25,8 @@ public interface FeatureSet extends Identifiable{
 	 */
 	Iterable<Class<? extends Feature<?>>> getFeatureTypes();
 	
+	Iterable<Feature<?>> getFeatures();
+	
 	static class FeatureSetImpl implements FeatureSet{
 
 		private final Map<Class<? extends Feature<?>>, Feature<?>> features;
@@ -71,6 +73,11 @@ public interface FeatureSet extends Identifiable{
 		public Iterable<Class<? extends Feature<?>>> getFeatureTypes(){
 			return featureTypes;
 		}
+
+		@Override
+		public Iterable<Feature<?>> getFeatures() {
+			return features.values();
+		}
 	}
 	
 	/**
@@ -82,9 +89,9 @@ public interface FeatureSet extends Identifiable{
 	public static class FeatureSetFactory{
 		private final Map<Class<? extends Feature<?>>, Integer> featureWeights;
 		private final int expectedFeatureWeight;
-		private final Iterable<Class<? extends Feature<?>>> featureTypes;
+		private final Iterable<? extends Class<? extends Feature<?>>> featureTypes;
 		
-		public FeatureSetFactory(Iterable<Class<? extends Feature<?>>> featureTypes){
+		public FeatureSetFactory(Iterable<? extends Class<? extends Feature<?>>> featureTypes){
 			this.featureWeights = new HashMap<Class<? extends Feature<?>>, Integer>();
 			
 			int weightAccumulator = 0;
@@ -100,8 +107,9 @@ public interface FeatureSet extends Identifiable{
 			this.featureTypes = featureTypes;
 		}
 		
+		@SuppressWarnings("unchecked")
 		public Iterable<Class<? extends Feature<?>>> getFeatureTypes(){
-			return featureTypes;
+			return (Iterable<Class<? extends Feature<?>>>)(Iterable<?>)featureTypes;
 		}
 
 		public FeatureSet createFeatureSet(Identifier id, Iterable<FeatureDefinition> features){
@@ -126,7 +134,7 @@ public interface FeatureSet extends Identifiable{
 				throw new IllegalArgumentException("The features supplied do not contain all the features expected. feature types: "+featuresMap.keySet()+", expected feature types: "+featureWeights.keySet());
 			}
 			
-			return new FeatureSetImpl(id, featuresMap, featureTypes);
+			return new FeatureSetImpl(id, featuresMap, getFeatureTypes());
 		}
 	}
 }

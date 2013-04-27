@@ -6,7 +6,7 @@
     <packaging>jar</packaging>
     <name>Machine Learning - Main</name>
     <parent>
-		<groupId>uk.ac.sussex.ml</groupId>
+		<groupId>com.ahaines.ml</groupId>
 		<artifactId>ml-parent</artifactId>
 		<version>0.0.0.1-SNAPSHOT</version>
     </parent>

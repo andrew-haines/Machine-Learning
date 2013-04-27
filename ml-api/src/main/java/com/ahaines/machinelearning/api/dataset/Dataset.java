@@ -30,15 +30,14 @@ public interface Dataset<T extends FeatureSet> {
 	 * each of these types.
 	 * @return
 	 */
-	public Iterable<Class<? extends Feature<?>>> getFeatureTypes();
-	
+	public Iterable<Class<? extends Feature<?>>> getFeatureTypes();	
 	
 	static class DatasetImpl implements Dataset<FeatureSet>{
 
 		private final Map<Identifier, FeatureSet> instances;
-		private final Iterable<Class<? extends Feature<?>>> featureTypes;
+		private final Iterable<? extends Class<? extends Feature<?>>> featureTypes;
 		
-		private DatasetImpl(Map<Identifier, FeatureSet> instances, Iterable<Class<? extends Feature<?>>> featureTypes){
+		private DatasetImpl(Map<Identifier, FeatureSet> instances, Iterable<? extends Class<? extends Feature<?>>> featureTypes){
 			this.instances = Collections.unmodifiableMap(instances);
 			this.featureTypes = featureTypes;
 		}
@@ -53,26 +52,27 @@ public interface Dataset<T extends FeatureSet> {
 			return instances.values();
 		}
 	
+		@SuppressWarnings("unchecked")
 		@Override
 		public Iterable<Class<? extends Feature<?>>> getFeatureTypes() {
-			return featureTypes;
+			return (Iterable<Class<? extends Feature<?>>>)(Iterable<?>)featureTypes;
 		}
 	}
 	
 	public static class DatasetBuilder {
 		
 		private final Map<Identifier, FeatureSet> dataset;
-		private final Iterable<Class<? extends Feature<?>>> featureTypes;
+		private final Iterable<? extends Class<? extends Feature<?>>> featureTypes;
 		
-		public DatasetBuilder(Iterable<Class<? extends Feature<?>>> featureTypes){
+		public DatasetBuilder(Iterable<? extends Class<? extends Feature<?>>> featureTypes){
 			this(new HashMap<Identifier, FeatureSet>(),featureTypes);
 		}
 		
-		public DatasetBuilder(Iterable<FeatureSet> features, Iterable<Class<? extends Feature<?>>> featureTypes){
+		public DatasetBuilder(Iterable<FeatureSet> features, Iterable<? extends Class<? extends Feature<?>>> featureTypes){
 			this(Identifiable.UTIL.index(features), featureTypes);
 		}
 		
-		public DatasetBuilder(Map<Identifier, FeatureSet> dataset, Iterable<Class<? extends Feature<?>>> featureTypes){
+		public DatasetBuilder(Map<Identifier, FeatureSet> dataset, Iterable<? extends Class<? extends Feature<?>>> featureTypes){
 			this.dataset = dataset;
 			this.featureTypes = featureTypes;
 		}
