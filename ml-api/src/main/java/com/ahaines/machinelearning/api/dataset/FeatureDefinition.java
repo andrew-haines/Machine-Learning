@@ -35,7 +35,7 @@ public class FeatureDefinition {
 	}
 	
 	public String toString(){
-		return ""+featureType.getSimpleName()+": "+feature;
+		return "{"+featureType.getSimpleName()+", "+feature+"}";
 	}
 
 	@Override

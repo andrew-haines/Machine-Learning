@@ -53,6 +53,10 @@ public class Email {
 				return value.hashCode();
 			}
 			
+			public String toString(){
+				return "#"+value+"#";
+			}
+			
 		}
 		
 		public static class ViagraFeature extends ContainsFeature {

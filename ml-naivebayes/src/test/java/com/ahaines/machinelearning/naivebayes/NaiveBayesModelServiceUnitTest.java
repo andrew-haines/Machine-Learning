@@ -103,11 +103,11 @@ public class NaiveBayesModelServiceUnitTest {
 		ClassificationProbability<EmailClassification> classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(1)).getClassification();
 		
 		assertThat(classification.getValue(), is(equalTo(EmailClassification.HAM)));
-		assertThat(classification.getProbability(), is(equalTo(0.17168304668304668)));
+		assertThat(classification.getProbability(), is(equalTo(0.817509881422925)));
 		
 		classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(2)).getClassification();
 		
 		assertThat(classification.getValue(), is(equalTo(EmailClassification.SPAM)));
-		//assertThat(classification.getProbability(), is(equalTo(0.928)));
+		assertThat(classification.getProbability(), is(equalTo(0.9270152505446623)));
 	}
 }
