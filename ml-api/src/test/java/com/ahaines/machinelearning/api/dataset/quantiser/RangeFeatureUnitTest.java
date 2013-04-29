@@ -1,10 +1,10 @@
-package com.ahaines.machinelearning.decisiontree;
+package com.ahaines.machinelearning.api.dataset.quantiser;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.ahaines.machinelearning.api.dataset.ContinuousFeature.IntegerFeature;
-import com.ahaines.machinelearning.decisiontree.ContinuousFeatureSplitter.ContinuousFeatureSplitters.RangeFeature;
+import com.ahaines.machinelearning.api.dataset.quantiser.RangeFeature;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.is;

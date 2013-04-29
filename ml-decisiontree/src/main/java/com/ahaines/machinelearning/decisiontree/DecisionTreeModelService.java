@@ -185,7 +185,7 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 		
 		Collection<Split> allSplits = new ArrayList<Split>(featureValues.size());
 		for (Feature<?> featureValue: featureValues){
-			Collection<ClassifiedFeatureSet> featureSplit = toCollection(ClassifiedDataset.filterFeatureSet(instances, new FeatureDefinition(featureValue, featureType)));
+			Collection<ClassifiedFeatureSet> featureSplit = Utils.toCollection(ClassifiedDataset.filterFeatureSet(instances, new FeatureDefinition(featureValue, featureType)));
 			allSplits.add(new Split(new FeatureDefinition(featureValue, featureType), featureSplit));
 		}
 		
@@ -197,12 +197,6 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 		
 		return continousFeatureSplitter.splitInstances(instances, featureType);
 	}
-
-	private static <E> Collection<E> toCollection(Iterable<E> iterable) {
-	    return (iterable instanceof Collection)
-	        ? (Collection<E>) iterable
-	        : Lists.newArrayList(iterable.iterator());
-	  }
 
 	private int sizeOf(Iterable<Split> splits) {
 		int total = 0;

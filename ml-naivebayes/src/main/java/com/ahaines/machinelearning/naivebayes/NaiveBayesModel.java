@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.ahaines.machinelearning.api.Model;
 import com.ahaines.machinelearning.api.dataset.ClassifiedFeatureSet;
 import com.ahaines.machinelearning.api.dataset.ContinuousFeature;
@@ -17,14 +20,16 @@ import com.ahaines.machinelearning.api.dataset.Feature.Features;
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 
-public class NaiveBayesModel<Classification extends Enum<Classification>> implements Model{
+public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implements Model{
 
-	private final Map<Classification, Double> priorClassificationProbabilities;
-	private final Map<Classification, Map<FeatureDefinition, Double>> likelihoodProbilities;
+	private static final Logger LOG = LoggerFactory.getLogger(NaiveBayesModel.class);
+	
+	private final Map<CLASSIFICATION, Double> priorClassificationProbabilities;
+	private final Map<CLASSIFICATION, Map<FeatureDefinition, Double>> likelihoodProbilities;
 	private final Map<FeatureDefinition, Double> priorFeatureProbabilities;
 	private final Metrics metrics;
 	
-	public NaiveBayesModel(Map<Classification, Double> priorClassificationProbabilities, Map<Classification, Map<FeatureDefinition, Double>> likelihoodProbilities, Map<FeatureDefinition, Double> priorFeatureProbabilities){
+	public NaiveBayesModel(Map<CLASSIFICATION, Double> priorClassificationProbabilities, Map<CLASSIFICATION, Map<FeatureDefinition, Double>> likelihoodProbilities, Map<FeatureDefinition, Double> priorFeatureProbabilities){
 		this.priorClassificationProbabilities = Collections.unmodifiableMap(priorClassificationProbabilities);
 		this.likelihoodProbilities = Collections.unmodifiableMap(likelihoodProbilities);
 		this.metrics = new Metrics();
@@ -36,11 +41,11 @@ public class NaiveBayesModel<Classification extends Enum<Classification>> implem
 		return metrics;
 	}
 	
-	public ClassificationProbability<Classification> getClassification(FeatureSet instance) {
+	public ClassificationProbability<CLASSIFICATION> getClassification(FeatureSet instance) {
 		double maxProbability = 0;
-		Classification maxClassification = null;
+		CLASSIFICATION maxClassification = null;
 		
-		for(Classification classification: priorClassificationProbabilities.keySet()){
+		for(CLASSIFICATION classification: priorClassificationProbabilities.keySet()){
 			
 			double posteriorProbabilityProduct = 1;
 			Map<FeatureDefinition, Double> givenClassificationProbabilities = likelihoodProbilities.get(classification);
@@ -55,7 +60,7 @@ public class NaiveBayesModel<Classification extends Enum<Classification>> implem
 					
 					Double probability = givenClassificationProbabilities.get(new FeatureDefinition(instance.getFeature(featureType), featureType));
 					if (probability == null){
-						posteriorProbabilityProduct = 0; // not possible. no probabilities determined for this value
+						posteriorProbabilityProduct *= 0.01; // not possible. no probabilities determined for this value so this means the likely hood is very small. add an appropriately small probability
 						continue;
 					}
 					posteriorProbabilityProduct *= probability;
@@ -73,7 +78,7 @@ public class NaiveBayesModel<Classification extends Enum<Classification>> implem
 		if (maxClassification == null){
 			// just use the prior probabilities if there is no further information 
 			
-			for (Entry<Classification, Double> entry: priorClassificationProbabilities.entrySet()){
+			for (Entry<CLASSIFICATION, Double> entry: priorClassificationProbabilities.entrySet()){
 				if (maxProbability < entry.getValue()){
 					maxProbability = entry.getValue();
 					maxClassification = entry.getKey();
@@ -85,7 +90,7 @@ public class NaiveBayesModel<Classification extends Enum<Classification>> implem
 		
 		maxProbability = maxProbability / getPriorFeatureProbabilitiesProduct(instance);
 		
-		return new ClassificationProbability<Classification>(instance.getId(), maxClassification, maxProbability);
+		return new ClassificationProbability<CLASSIFICATION>(instance.getId(), maxClassification, maxProbability);
 	}
 	
 	private double getPriorFeatureProbabilitiesProduct(FeatureSet instance) {
@@ -157,7 +162,9 @@ public class NaiveBayesModel<Classification extends Enum<Classification>> implem
 			// prior
 			
 			for (Entry<Classification, Integer> priorCount: priorCounts.entrySet()){
-				priorClassificationProbabilities.put(priorCount.getKey(), new Double((double)priorCount.getValue() / (double)totalInstancesSeen));
+				double priorProbability = (double)priorCount.getValue() / (double)totalInstancesSeen;
+				priorClassificationProbabilities.put(priorCount.getKey(), priorProbability);
+				LOG.debug("p("+priorCount.getKey()+") = "+priorCount.getValue()+" / "+totalInstancesSeen+" = "+priorProbability);
 			}
 			
 			// posterior
@@ -173,6 +180,8 @@ public class NaiveBayesModel<Classification extends Enum<Classification>> implem
 						double featurePosteriorProbability = (double)feature.getValue() / (double)totalInstancesInClassification;
 						
 						Feature<?> featureInstance = feature.getKey().getFeature();
+						
+						LOG.debug("p("+feature.getKey().getFeatureType().getSimpleName()+"#"+feature.getKey().getFeature().getValue()+"|"+posteriorCount.getKey()+") = "+feature.getValue()+" / "+totalInstancesInClassification +" = "+featurePosteriorProbability);
 						
 						if (featureInstance == Features.MISSING){
 							// for all features add a count

@@ -25,7 +25,7 @@ public interface ModelService<T extends Model> {
 	 */
 	ClassifiedDataset classifyDataset(Dataset<? extends FeatureSet> dataset, T model);
 	
-	static class Utils {
+	static class Utils extends com.ahaines.machinelearning.api.util.Utils{
 
 		public <T extends Model> T getMetrics(ClassifiedDataset trainingSet, ClassifiedDataset expectedTestSet, ModelService<T> modelService, Enum<?> positiveClassification) {
 			// calculate distribution
