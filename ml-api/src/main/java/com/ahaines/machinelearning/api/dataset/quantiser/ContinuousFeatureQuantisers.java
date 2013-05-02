@@ -18,16 +18,23 @@ public class ContinuousFeatureQuantisers {
 		
 		return new ContinuousFeatureQuantiser(){
 
+			@SuppressWarnings({ "unchecked", "rawtypes" })
 			@Override
-			public void quantiser(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<?>> featureQuantiserType, QuantiserEventListener listener) {
+			public void quantise(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<?>> featureQuantiserType, QuantiserEventProcessor processor) {
 				// calculate average
 				
 				int count = 0;
+				NumberConverter<?> converter = null;
 				
-				int sum = 0;
+				double sum = 0;
 				
 				for (ClassifiedFeatureSet instance: instances){
-					sum += instance.getFeature(featureQuantiserType).getValue().intValue();
+					
+					ContinuousFeature<?> conFeature = instance.getFeature(featureQuantiserType);
+					if (converter == null){
+						converter = conFeature.getNumberConverter();
+					}
+					sum += conFeature.getValue().doubleValue();
 					count++;
 				}
 				
@@ -35,7 +42,9 @@ public class ContinuousFeatureQuantisers {
 				
 				// now put all instances in buckets above and below the average
 				
-				listener.newRangeDetermined(new RangeFeature<Integer>(0, (int)average), Iterables.filter(instances, new Predicate<ClassifiedFeatureSet>() {
+				RangeFeature<?> newFeature = new RangeFeature(converter.getMinPossibleValue(), converter.castToType(average));
+				
+				processor.newRangeDetermined(newFeature, Iterables.filter(instances, new Predicate<ClassifiedFeatureSet>() {
 					
 					public boolean apply(ClassifiedFeatureSet instance){
 						return instance.getFeature(featureQuantiserType).getValue().intValue() < average;
@@ -43,7 +52,9 @@ public class ContinuousFeatureQuantisers {
 					
 				}));
 				
-				listener.newRangeDetermined(new RangeFeature<Integer>((int)average, Integer.MAX_VALUE), Iterables.filter(instances, new Predicate<ClassifiedFeatureSet>() {
+				newFeature = new RangeFeature(converter.castToType(average), converter.getMaxPossibleValue(), true);
+				
+				processor.newRangeDetermined(newFeature, Iterables.filter(instances, new Predicate<ClassifiedFeatureSet>() {
 					
 					public boolean apply(ClassifiedFeatureSet instance){
 						return instance.getFeature(featureQuantiserType).getValue().intValue() >= average;
@@ -58,8 +69,9 @@ public class ContinuousFeatureQuantisers {
 	public static ContinuousFeatureQuantiser getClusteredQuantiser(){
 		return new ContinuousFeatureQuantiser(){
 
+			@SuppressWarnings({ "rawtypes", "unchecked" })
 			@Override
-			public void quantiser(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<?>> featureQuantiserType, QuantiserEventListener listener) {
+			public void quantise(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<?>> featureQuantiserType, QuantiserEventProcessor processor) {
 				
 				/*
 				 * This algorithm basically sorts the instance set by the feature and then runs through creating
@@ -72,9 +84,9 @@ public class ContinuousFeatureQuantisers {
 
 					@Override
 					public int compare(ClassifiedFeatureSet o1, ClassifiedFeatureSet o2) {
-						int feature1 = o1.getFeature(featureQuantiserType).getValue().intValue();
-						int feature2 = o2.getFeature(featureQuantiserType).getValue().intValue();
-						return feature1 - feature2;
+						Number feature1 = o1.getFeature(featureQuantiserType).getValue();
+						Number feature2 = o2.getFeature(featureQuantiserType).getValue();
+						return (int)(feature1.doubleValue() - feature2.doubleValue());
 					}
 					
 				});
@@ -84,22 +96,26 @@ public class ContinuousFeatureQuantisers {
 				 *  Wont this mean its impossible to get this classification if it ends up going down this branch?
 				 */
 				
-				int min = 0;
-				int lastRecord = 0;
+				Number min = null;
+				Number lastRecord = null;
 				Enum<?> lastClassification = null;
 				Collection<ClassifiedFeatureSet> tempInstanceSplit = new ArrayList<ClassifiedFeatureSet>();
+				NumberConverter<?> converter = null;
 				
 				for (ClassifiedFeatureSet instance: sortedList){
-					int newRecord = instance.getFeature(featureQuantiserType).getValue().intValue();
+					Number newRecord = instance.getFeature(featureQuantiserType).getValue();
 					if (lastClassification == null){
 						lastClassification = instance.getClassification().getValue();
 						lastRecord = newRecord;
+						converter = instance.getFeature(featureQuantiserType).getNumberConverter();
+						min = converter.getMinPossibleValue();
 						
 					} else if (!lastClassification.equals(instance.getClassification().getValue())){
-						if (lastRecord != newRecord){ // only split if the value has actually changed else we will split with this value twice
+						if (!lastRecord.equals(newRecord)){ // only split if the value has actually changed else we will split with this value twice
 							lastClassification = instance.getClassification().getValue();
 							
-							listener.newRangeDetermined(new RangeFeature<Integer>(min, newRecord), tempInstanceSplit);
+							RangeFeature<?> newRange = new RangeFeature(min, newRecord);
+							processor.newRangeDetermined(newRange, tempInstanceSplit);
 							tempInstanceSplit = new ArrayList<ClassifiedFeatureSet>();
 							min = newRecord;
 							lastRecord = newRecord;
@@ -109,7 +125,7 @@ public class ContinuousFeatureQuantisers {
 					tempInstanceSplit.add(instance);
 				}
 				
-				listener.newRangeDetermined(new RangeFeature<Integer>(min, Integer.MAX_VALUE), tempInstanceSplit);
+				processor.newRangeDetermined(new RangeFeature(min, converter.getMaxPossibleValue(), true), tempInstanceSplit);
 			}
 			
 		};

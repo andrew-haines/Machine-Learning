@@ -7,6 +7,8 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.ahaines.machinelearning.api.dataset.ContinuousFeature.IntegerFeature;
+import com.ahaines.machinelearning.api.dataset.ContinuousFeature.LongFeature;
 import com.ahaines.machinelearning.api.dataset.FeatureSet.FeatureSetFactory;
 
 import static org.junit.Assert.assertThat;
@@ -110,39 +112,17 @@ public class FeatureSetUnitTest {
 	}
 }
 
-class TestFeature1 implements ContinuousFeature<Long>{
+class TestFeature1 extends LongFeature{
 
-	private final long val;
-	
 	public TestFeature1(long val){
-		this.val = val;
-	}
-	@Override
-	public Long getValue() {
-		return val;
-	}
-	
-	@Override
-	public boolean intersects(Feature<Long> otherFeature) {
-		return val == otherFeature.getValue();
+		super(val);
 	}
 }
 
-class TestFeature2 implements ContinuousFeature<Integer>{
+class TestFeature2 extends IntegerFeature{
 
-	private final int val;
-	
 	public TestFeature2(int val){
-		this.val = val;
-	}
-	@Override
-	public Integer getValue() {
-		return val;
-	}
-	
-	@Override
-	public boolean intersects(Feature<Integer> otherFeature) {
-		return val == otherFeature.getValue();
+		super(val);
 	}
 }
 
@@ -192,22 +172,10 @@ class TestFeature4 implements DiscreteFeature<Feature2Vals>{
 	}
 }
 
-class TestFeature5 implements ContinuousFeature<Long>{
-
-	private final long val;
+class TestFeature5 extends LongFeature {
 	
 	public TestFeature5(long val){
-		this.val = val;
-	}
-	
-	@Override
-	public Long getValue() {
-		return val;
-	}
-	
-	@Override
-	public boolean intersects(Feature<Long> otherFeature) {
-		return val == otherFeature.getValue();
+		super(val);
 	}
 }
 

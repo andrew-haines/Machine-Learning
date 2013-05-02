@@ -8,14 +8,20 @@ import com.ahaines.machinelearning.api.dataset.Feature;
  *
  * @param <T>
  */
-public class RangeFeature<T extends Comparable<T>> implements Feature<T>{
+public class RangeFeature<T extends Number & Comparable<T>> implements Feature<T>{
 
 	private final T lowerBound;
 	private final T upperBound;
+	private final boolean inclusive;
 	
-	RangeFeature(T lowerBound, T upperBound){
+	public RangeFeature(T lowerBound, T upperBound, boolean inclusive){
 		this.lowerBound = lowerBound;
 		this.upperBound = upperBound;
+		this.inclusive = inclusive;
+	}
+	
+	public RangeFeature(T lowerBound, T upperBound){
+		this(lowerBound, upperBound, false);
 	}
 	
 	@Override
@@ -27,12 +33,14 @@ public class RangeFeature<T extends Comparable<T>> implements Feature<T>{
 	public boolean intersects(Feature<T> otherFeature) {
 		int lowBoundVal = lowerBound.compareTo(otherFeature.getValue());
 		int upBoundVal = upperBound.compareTo(otherFeature.getValue());
-		
-		return lowBoundVal <= 0 && upBoundVal > 0;
+		if (inclusive){
+			return lowBoundVal <= 0 && upBoundVal >= 0;
+		} else {
+			return lowBoundVal <= 0 && upBoundVal > 0;
+		}
 	}
 	
 	public String toString(){
-		return lowerBound+" >= x < "+upperBound;
+		return lowerBound+" >= x "+(inclusive?"=":"")+"< "+upperBound;
 	}
-	
 }

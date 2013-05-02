@@ -5,10 +5,10 @@ import com.ahaines.machinelearning.api.dataset.ContinuousFeature;
 
 public interface ContinuousFeatureQuantiser {
 
-	public void quantiser(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<?>> featureQuantiserType, QuantiserEventListener listener);
+	void quantise(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<?>> featureQuantiserType, QuantiserEventProcessor listener);
 	
-	public static interface QuantiserEventListener {
+	public static interface QuantiserEventProcessor {
 		
-		public void newRangeDetermined(RangeFeature<? extends Number> newRange, Iterable<ClassifiedFeatureSet> instanceInSplit);
+		void newRangeDetermined(RangeFeature<? extends Number> range, Iterable<ClassifiedFeatureSet> instanceInSplit);
 	}
 }

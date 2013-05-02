@@ -16,7 +16,7 @@ public interface Feature<T> {
 	T getValue();
 	
 	/**
-	 * returns true if this feature incepts the feature specified
+	 * returns true if this feature intercepts the feature specified
 	 * @param otherFeature
 	 * @return
 	 */

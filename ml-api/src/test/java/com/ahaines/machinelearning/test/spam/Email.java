@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import com.ahaines.machinelearning.api.dataset.DiscreteFeature;
 import com.ahaines.machinelearning.api.dataset.Feature;
+import com.ahaines.machinelearning.api.dataset.ContinuousFeature.IntegerFeature;
 
 public class Email {
 
@@ -14,7 +15,7 @@ public class Email {
 	
 	public static class Features{
 		
-		public static Iterable<? extends Class<? extends Feature<?>>> ALL_FEATURE_TYPES = Arrays.asList(EnlargementFeature.class, ViagraFeature.class);
+		public static Iterable<? extends Class<? extends Feature<?>>> ALL_FEATURE_TYPES = Arrays.asList(EnlargementFeature.class, ViagraFeature.class, HoursIgnoredFeature.class);
 		
 		public static enum Contains{
 			PRESENT,
@@ -71,6 +72,13 @@ public class Email {
 			public EnlargementFeature(Contains value){
 				super(value);
 			}			
+		}
+		
+		public static class HoursIgnoredFeature extends IntegerFeature {
+
+			public HoursIgnoredFeature(Integer hoursIgnored) {
+				super(hoursIgnored);
+			}
 		}
 	}
 }
