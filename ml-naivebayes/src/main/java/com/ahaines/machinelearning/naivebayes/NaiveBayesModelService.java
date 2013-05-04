@@ -3,13 +3,13 @@ package com.ahaines.machinelearning.naivebayes;
 import java.util.Map;
 
 import com.ahaines.machinelearning.api.ModelService;
-import com.ahaines.machinelearning.api.dataset.Classification;
 import com.ahaines.machinelearning.api.dataset.ClassifiedDataset;
 import com.ahaines.machinelearning.api.dataset.ClassifiedFeatureSet;
 import com.ahaines.machinelearning.api.dataset.Dataset;
 import com.ahaines.machinelearning.api.dataset.FeatureSet;
 import com.ahaines.machinelearning.api.dataset.Identifiable;
 import com.ahaines.machinelearning.api.dataset.Identifier;
+import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantiser;
 import com.ahaines.machinelearning.naivebayes.NaiveBayesModel.ClassificationProbability;
 import com.ahaines.machinelearning.naivebayes.NaiveBayesModel.NaiveBayesModelFactory;
 import com.google.common.base.Function;
@@ -17,9 +17,14 @@ import com.google.common.collect.Iterables;
 
 public class NaiveBayesModelService<T extends Enum<T>> implements ModelService<NaiveBayesModel<T>>{
 
+	private final ContinuousFeatureQuantiser quantiser;
+	
+	public NaiveBayesModelService(ContinuousFeatureQuantiser quantiser){
+		this.quantiser = quantiser;
+	}
 	@Override
 	public NaiveBayesModel<T> trainModel(ClassifiedDataset trainingData) {
-		NaiveBayesModelFactory<T> modelFactory = new NaiveBayesModelFactory<T>();
+		NaiveBayesModelFactory<T> modelFactory = new NaiveBayesModelFactory<T>(quantiser);
 		
 		for (ClassifiedFeatureSet instance: trainingData.getInstances()){
 			modelFactory.addInstance(instance);

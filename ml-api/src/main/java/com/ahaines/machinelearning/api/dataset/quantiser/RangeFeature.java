@@ -40,7 +40,30 @@ public class RangeFeature<T extends Number & Comparable<T>> implements Feature<T
 		}
 	}
 	
+	@Override
 	public String toString(){
 		return lowerBound+" >= x "+(inclusive?"=":"")+"< "+upperBound;
+	}
+	
+	@Override
+	public int hashCode(){
+		int hash = 31;
+		
+		hash *= lowerBound.hashCode();
+		hash *= upperBound.hashCode();
+		hash *= (inclusive)?1:2;
+		
+		return hash;
+	}
+	
+	@Override
+	public boolean equals(Object obj){
+		if (obj instanceof RangeFeature){
+			RangeFeature<?> other = (RangeFeature<?>)obj;
+			
+			return other.lowerBound.equals(this.lowerBound) && other.upperBound.equals(this.upperBound) && other.inclusive == this.inclusive;
+		}
+		
+		return false;
 	}
 }

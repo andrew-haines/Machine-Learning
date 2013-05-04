@@ -1,9 +1,13 @@
 package com.ahaines.machinelearning.naivebayes;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +21,9 @@ import com.ahaines.machinelearning.api.dataset.FeatureDefinition;
 import com.ahaines.machinelearning.api.dataset.FeatureSet;
 import com.ahaines.machinelearning.api.dataset.Identifier;
 import com.ahaines.machinelearning.api.dataset.Feature.Features;
+import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantiser;
+import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantiser.QuantiserEventProcessor;
+import com.ahaines.machinelearning.api.dataset.quantiser.RangeFeature;
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 
@@ -105,36 +112,51 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 		return priorProduct;
 	}
 
-	static class NaiveBayesModelFactory<Classification extends Enum<Classification>>{
+	static class NaiveBayesModelFactory<CLASSIFICATION extends Enum<CLASSIFICATION>>{
 		
-		private final Map<Classification, Integer> priorCounts = new HashMap<Classification, Integer>();
-		private final Map<Classification, PosteriorCounts> featureCounts = new HashMap<Classification, PosteriorCounts>();
+		private final Map<CLASSIFICATION, Integer> priorCounts = new HashMap<CLASSIFICATION, Integer>();
+		private final Map<CLASSIFICATION, LikelihoodCounts> discreteFeatureCounts = new HashMap<CLASSIFICATION, LikelihoodCounts>();
+		private final Set<Class<? extends ContinuousFeature<?>>> continuousFeatures = new HashSet<Class<? extends ContinuousFeature<?>>>();
+		private final Collection<ClassifiedFeatureSet> allInstances = new ArrayList<ClassifiedFeatureSet>();
+		
 		private int totalInstancesSeen = 0;
+		private final ContinuousFeatureQuantiser quantiser;
+		
+		NaiveBayesModelFactory(ContinuousFeatureQuantiser quantiser){
+			this.quantiser = quantiser;
+		}
 		
 		@SuppressWarnings("unchecked")
 		void addInstance(ClassifiedFeatureSet instance){
 			totalInstancesSeen++;
-			Classification instanceClass = (Classification)instance.getClassification().getValue();
+			allInstances.add(instance);
+			CLASSIFICATION instanceClass = getClassOfInstance(instance);
 			incrementCount(instanceClass, priorCounts);
 			for (Class<? extends Feature<?>> featureType: instance.getFeatureTypes()){
 				Feature<?> feature = instance.getFeature(featureType);
-				if (feature == Feature.Features.MISSING){
-					// if this is a missing feature type then 
-				} else if (feature instanceof ContinuousFeature){
-					// create feature split
+				if (feature instanceof ContinuousFeature){
+					continuousFeatures.add((Class<? extends ContinuousFeature<?>>)featureType);
 				} else {
-					PosteriorCounts counts = featureCounts.get(instanceClass);
-					
-					if (counts == null){
-						counts = new PosteriorCounts();
-					}
-					
-					counts.seenFeature(featureType, feature);
-					
-					featureCounts.put(instanceClass, counts);
+					addDiscreteFeatureCount(instanceClass, featureType, feature);
 				}
-				
 			}
+		}
+		
+		private void addDiscreteFeatureCount(CLASSIFICATION instanceClass, Class<? extends Feature<?>> featureType, Feature<?> feature){
+			LikelihoodCounts counts = discreteFeatureCounts.get(instanceClass);
+			
+			if (counts == null){
+				counts = new LikelihoodCounts();
+			}
+			
+			counts.seenFeature(featureType, feature);
+			
+			discreteFeatureCounts.put(instanceClass, counts);
+		}
+		
+		@SuppressWarnings("unchecked")
+		private CLASSIFICATION getClassOfInstance(ClassifiedFeatureSet instance){
+			return (CLASSIFICATION)instance.getClassification().getValue();
 		}
 		
 		private <T> void incrementCount(T key, Map<T, Integer> accumulator){
@@ -151,17 +173,17 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 			accumulator.put(key, currentCount+amount);
 		}
 
-		public NaiveBayesModel<Classification> getModel() {
+		public NaiveBayesModel<CLASSIFICATION> getModel() {
 			
 			// now calculate the prior and posterior probabilities
 			
-			Map<Classification, Double> priorClassificationProbabilities = new HashMap<Classification, Double>();
-			Map<Classification, Map<FeatureDefinition, Double>> likelihoodProbabilities = new HashMap<Classification, Map<FeatureDefinition, Double>>();
+			Map<CLASSIFICATION, Double> priorClassificationProbabilities = new HashMap<CLASSIFICATION, Double>();
+			Map<CLASSIFICATION, Map<FeatureDefinition, Double>> likelihoodProbabilities = new HashMap<CLASSIFICATION, Map<FeatureDefinition, Double>>();
 			Map<FeatureDefinition, Integer> priorFeatureCounts = new HashMap<FeatureDefinition, Integer>();
 			
 			// prior
 			
-			for (Entry<Classification, Integer> priorCount: priorCounts.entrySet()){
+			for (Entry<CLASSIFICATION, Integer> priorCount: priorCounts.entrySet()){
 				double priorProbability = (double)priorCount.getValue() / (double)totalInstancesSeen;
 				priorClassificationProbabilities.put(priorCount.getKey(), priorProbability);
 				LOG.debug("p("+priorCount.getKey()+") = "+priorCount.getValue()+" / "+totalInstancesSeen+" = "+priorProbability);
@@ -169,7 +191,25 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 			
 			// posterior
 			
-			for (Entry<Classification, PosteriorCounts> posteriorCount: featureCounts.entrySet()){
+			// continuous quantisation
+			
+			for (final Class<? extends ContinuousFeature<?>> featureType: continuousFeatures){
+				quantiser.quantise(allInstances, featureType, new QuantiserEventProcessor() {
+					
+					@Override
+					public void newRangeDetermined(RangeFeature<? extends Number> range, Iterable<ClassifiedFeatureSet> instancesInSplit) {
+						for (ClassifiedFeatureSet instance: instancesInSplit){
+							CLASSIFICATION instanceClass = getClassOfInstance(instance);
+							
+							addDiscreteFeatureCount(instanceClass, featureType, range);
+						}
+					}
+				});
+			}
+			
+			//discrete
+			
+			for (Entry<CLASSIFICATION, LikelihoodCounts> posteriorCount: discreteFeatureCounts.entrySet()){
 				Map<FeatureDefinition, Double> featureProbabilities = new HashMap<FeatureDefinition, Double>();
 				
 				int totalInstancesInClassification = priorCounts.get(posteriorCount.getKey());
@@ -189,7 +229,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 						} else if (featureInstance instanceof DiscreteFeature){
 							featureProbabilities.put(feature.getKey(), featurePosteriorProbability);
 						} else if (featureInstance instanceof ContinuousFeature){
-							// work out what the ranges are for this split type.
+							// we should not be dealing with continuous features in this way. All continuous features should have been quantised by this point
 							throw new UnsupportedOperationException();
 						}
 					}
@@ -198,7 +238,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 				likelihoodProbabilities.put(posteriorCount.getKey(), featureProbabilities);
 			}
 			
-			return new NaiveBayesModel<Classification>(priorClassificationProbabilities, likelihoodProbabilities, new HashMap<FeatureDefinition, Double>(Maps.transformValues(priorFeatureCounts, new Function<Integer, Double>(){
+			return new NaiveBayesModel<CLASSIFICATION>(priorClassificationProbabilities, likelihoodProbabilities, new HashMap<FeatureDefinition, Double>(Maps.transformValues(priorFeatureCounts, new Function<Integer, Double>(){
 				
 				public Double apply(Integer value){
 					return (double)value / (double)totalInstancesSeen;
@@ -207,7 +247,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 		}
 	}
 	
-	private static class PosteriorCounts{
+	private static class LikelihoodCounts{
 		
 		private final Map<Class<? extends Feature<?>>, FeatureCounts> featureCounts = new HashMap<Class<? extends Feature<?>>, FeatureCounts>();
 		

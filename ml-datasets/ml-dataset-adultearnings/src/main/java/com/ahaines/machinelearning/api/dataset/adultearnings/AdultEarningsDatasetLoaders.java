@@ -101,10 +101,13 @@ public final class AdultEarningsDatasetLoaders{
 				} else if (i == AdultEarningsFeaures.ALL_FEATURE_TYPES.size()){ // this is the classification entry
 					AdultEarningsClassificationType classifier;
 					
-					switch (features[i].trim()){
-					case ">50K": classifier = AdultEarningsClassificationType.GREATER_THEN_50K;break;
-					case "<=50K":classifier = AdultEarningsClassificationType.LESS_THEN_50K;break;
-					default: throw new IllegalArgumentException("unknown classification: "+features[i]);
+					String featureValue = features[i].trim();
+					if (">50K".equalsIgnoreCase(featureValue)){
+						classifier = AdultEarningsClassificationType.GREATER_THEN_50K;
+					} else if ("<=50K".equalsIgnoreCase(featureValue)){
+						classifier = AdultEarningsClassificationType.LESS_THEN_50K;
+					} else {
+						throw new IllegalArgumentException("unknown classification: "+features[i]);
 					}
 					
 					classifications.put(instanceIdentifier, new AdultEarningsClassification(instanceIdentifier, classifier));
@@ -135,23 +138,27 @@ public final class AdultEarningsDatasetLoaders{
 			try {
 				return featureType.getConstructor(Integer.class).newInstance(Integer.parseInt(processedFeatureString));
 				
-			} catch (InstantiationException
-					| IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException | NoSuchMethodException
-					| SecurityException e) {
+			} catch (Exception e) {
 				throw new RuntimeException("Unable to parse adult data file for feature: "+featureType+" and value: "+featureString, e);
 			}
 		} else if (Enum.class.isAssignableFrom(featureType)){
 		
 			if (featureType == EducationFeature.class){
-				switch (processedFeatureString){
-					case "11TH": return EducationFeature.ELEVETH;
-					case "9TH": return EducationFeature.NINTH;
-					case "10TH": return EducationFeature.TENTH;
-					case "12TH": return EducationFeature.TWELFTH;
-					case "7TH_8TH": return EducationFeature.SEVENTH_EIGHTH;
-					case "5TH_6TH": return EducationFeature.FIFTH_SIXTH;
-					case "1ST_4TH": return EducationFeature.FIRST_FOURTH;
+				
+				if("11TH".equalsIgnoreCase(processedFeatureString)){
+					return EducationFeature.ELEVETH;
+				} else if ("9TH".equalsIgnoreCase(processedFeatureString)){
+					return EducationFeature.NINTH;
+				} else if ("10TH".equalsIgnoreCase(processedFeatureString)){
+					return EducationFeature.TENTH;
+				} else if ("12TH".equalsIgnoreCase(processedFeatureString)){
+					return EducationFeature.TWELFTH;
+				} else if ("7TH_8TH".equalsIgnoreCase(processedFeatureString)){
+					return EducationFeature.SEVENTH_EIGHTH;
+				} else if ("5TH_6TH".equalsIgnoreCase(processedFeatureString)){
+					return EducationFeature.FIFTH_SIXTH;
+				} else if ("1ST_4TH".equalsIgnoreCase(processedFeatureString)){
+					return EducationFeature.FIRST_FOURTH;
 				}
 			}
 			

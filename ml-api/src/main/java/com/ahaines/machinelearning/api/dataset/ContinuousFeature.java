@@ -30,6 +30,21 @@ public interface ContinuousFeature<T extends Number & Comparable<T>> extends Fea
 		public NumberConverter<Integer> getNumberConverter() {
 			return NumberConverter.FACTORY.getIntegerConverter();
 		}
+		
+		@Override
+		public boolean equals(Object obj){
+			if (obj instanceof IntegerFeature){
+				IntegerFeature other = (IntegerFeature)obj;
+				
+				return this.value.equals(other.value);
+			}
+			return false;
+		}
+		
+		@Override
+		public int hashCode(){
+			return value.intValue();
+		}
 	}
 	
 	public static class LongFeature implements ContinuousFeature<Long>{
@@ -57,6 +72,21 @@ public interface ContinuousFeature<T extends Number & Comparable<T>> extends Fea
 		@Override
 		public NumberConverter<Long> getNumberConverter() {
 			return NumberConverter.FACTORY.getLongConverter();
+		}
+		
+		@Override
+		public boolean equals(Object obj){
+			if (obj instanceof IntegerFeature){
+				IntegerFeature other = (IntegerFeature)obj;
+				
+				return this.value.equals(other.value);
+			}
+			return false;
+		}
+		
+		@Override
+		public int hashCode(){
+			return value.intValue();
 		}
 	}
 	

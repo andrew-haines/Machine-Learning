@@ -5,7 +5,7 @@ import com.ahaines.machinelearning.api.dataset.ContinuousFeature;
 
 public interface ContinuousFeatureQuantiser {
 
-	void quantise(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<?>> featureQuantiserType, QuantiserEventProcessor listener);
+	void quantise(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<?>> featureQuantiserType, QuantiserEventProcessor processor);
 	
 	public static interface QuantiserEventProcessor {
 		

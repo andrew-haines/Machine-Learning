@@ -17,6 +17,7 @@ import com.ahaines.machinelearning.api.dataset.Dataset.DatasetBuilder;
 import com.ahaines.machinelearning.api.dataset.FeatureDefinition;
 import com.ahaines.machinelearning.api.dataset.FeatureSet;
 import com.ahaines.machinelearning.api.dataset.Identifier;
+import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantisers;
 import com.ahaines.machinelearning.naivebayes.NaiveBayesModel.ClassificationProbability;
 import com.ahaines.machinelearning.naivebayes.NaiveBayesModelService.ClassifiedProbabilityDataSet;
 import com.ahaines.machinelearning.test.spam.Email;
@@ -43,7 +44,7 @@ public class NaiveBayesModelServiceUnitTest {
 	
 	@Before
 	public void before(){
-		candidate = new NaiveBayesModelService<EmailClassification>();
+		candidate = new NaiveBayesModelService<EmailClassification>(ContinuousFeatureQuantisers.getClusteredQuantiser());
 	}
 	
 	private static Dataset<FeatureSet> loadTestSet() {
