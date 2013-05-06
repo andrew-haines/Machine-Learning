@@ -1,5 +1,6 @@
 package com.ahaines.machinelearning.api.dataset.quantiser;
 
+
 import com.ahaines.machinelearning.api.dataset.Feature;
 
 /**
@@ -8,8 +9,8 @@ import com.ahaines.machinelearning.api.dataset.Feature;
  *
  * @param <T>
  */
-public class RangeFeature<T extends Number & Comparable<T>> implements Feature<T>{
-
+public class RangeFeature<T extends Number & Comparable<T>> implements Feature<T>, Comparable<Feature<T>>{
+	
 	private final T lowerBound;
 	private final T upperBound;
 	private final boolean inclusive;
@@ -65,5 +66,20 @@ public class RangeFeature<T extends Number & Comparable<T>> implements Feature<T
 		}
 		
 		return false;
+	}
+
+	@Override
+	public int compareTo(Feature<T> o) {
+		if (o instanceof RangeFeature){
+			return this.lowerBound.compareTo(((RangeFeature<T>)o).lowerBound);
+		} else {
+			if (o.intersects(o)){
+				return 0;
+			} else if (this.lowerBound.compareTo(o.getValue()) > 0){
+				return -1;
+			} else {
+				return 1;
+			}
+		}
 	}
 }

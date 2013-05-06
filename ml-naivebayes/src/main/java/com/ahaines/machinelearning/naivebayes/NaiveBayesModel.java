@@ -5,9 +5,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,11 +34,11 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 	private static final Logger LOG = LoggerFactory.getLogger(NaiveBayesModel.class);
 	
 	private final Map<CLASSIFICATION, Double> priorClassificationProbabilities;
-	private final Map<CLASSIFICATION, Map<FeatureDefinition, Double>> likelihoodProbilities;
+	private final Map<CLASSIFICATION, Map<Class<? extends Feature<?>>, Probability>> likelihoodProbilities;
 	private final Map<FeatureDefinition, Double> priorFeatureProbabilities;
 	private final Metrics metrics;
 	
-	public NaiveBayesModel(Map<CLASSIFICATION, Double> priorClassificationProbabilities, Map<CLASSIFICATION, Map<FeatureDefinition, Double>> likelihoodProbilities, Map<FeatureDefinition, Double> priorFeatureProbabilities){
+	public NaiveBayesModel(Map<CLASSIFICATION, Double> priorClassificationProbabilities, Map<CLASSIFICATION, Map<Class<? extends Feature<?>>, Probability>> likelihoodProbilities, Map<FeatureDefinition, Double> priorFeatureProbabilities){
 		this.priorClassificationProbabilities = Collections.unmodifiableMap(priorClassificationProbabilities);
 		this.likelihoodProbilities = Collections.unmodifiableMap(likelihoodProbilities);
 		this.metrics = new Metrics();
@@ -55,22 +57,24 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 		for(CLASSIFICATION classification: priorClassificationProbabilities.keySet()){
 			
 			double posteriorProbabilityProduct = 1;
-			Map<FeatureDefinition, Double> givenClassificationProbabilities = likelihoodProbilities.get(classification);
+			Map<Class<? extends Feature<?>>, Probability> givenClassificationProbabilities = likelihoodProbilities.get(classification);
 			
 			if (givenClassificationProbabilities != null){ // if we have no probability then do not consider this classification
 		
 				for (Class<? extends Feature<?>> featureType: instance.getFeatureTypes()){
 					
-					if (instance.getFeature(featureType) == Features.MISSING){
+					Feature<?> featureValue = instance.getFeature(featureType);
+					if (featureValue == Features.MISSING){
 						continue; // we cannot use this feature to contribute to the probability as we dont have it!
 					}
 					
-					Double probability = givenClassificationProbabilities.get(new FeatureDefinition(instance.getFeature(featureType), featureType));
+					// if this is a continuous probability then we need to consider all the range features and use the probability of the 
+					Probability probability = givenClassificationProbabilities.get(featureType);
 					if (probability == null){
 						posteriorProbabilityProduct *= 0.01; // not possible. no probabilities determined for this value so this means the likely hood is very small. add an appropriately small probability
 						continue;
 					}
-					posteriorProbabilityProduct *= probability;
+					posteriorProbabilityProduct *= probability.getProbability(featureValue);
 				}
 				
 				posteriorProbabilityProduct *= priorClassificationProbabilities.get(classification);
@@ -106,7 +110,12 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 			if (feature == Features.MISSING){
 				continue;
 			}
-			priorProduct *= priorFeatureProbabilities.get(new FeatureDefinition(feature));
+			try{
+				// if the feature is a continuous feature then we need to 
+				priorProduct *= priorFeatureProbabilities.get(new FeatureDefinition(feature));
+			} catch (NullPointerException e){
+				throw e;
+			}
 		}
 		
 		return priorProduct;
@@ -178,7 +187,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 			// now calculate the prior and posterior probabilities
 			
 			Map<CLASSIFICATION, Double> priorClassificationProbabilities = new HashMap<CLASSIFICATION, Double>();
-			Map<CLASSIFICATION, Map<FeatureDefinition, Double>> likelihoodProbabilities = new HashMap<CLASSIFICATION, Map<FeatureDefinition, Double>>();
+			Map<CLASSIFICATION, Map<Class<? extends Feature<?>>, Probability>> likelihoodProbabilities = new HashMap<CLASSIFICATION, Map<Class<? extends Feature<?>>, Probability>>();
 			Map<FeatureDefinition, Integer> priorFeatureCounts = new HashMap<FeatureDefinition, Integer>();
 			
 			// prior
@@ -210,7 +219,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 			//discrete
 			
 			for (Entry<CLASSIFICATION, LikelihoodCounts> posteriorCount: discreteFeatureCounts.entrySet()){
-				Map<FeatureDefinition, Double> featureProbabilities = new HashMap<FeatureDefinition, Double>();
+				Map<Class<? extends Feature<?>>, ProbabilityBuilder> featureProbabilities = new HashMap<Class<? extends Feature<?>>, ProbabilityBuilder>();
 				
 				int totalInstancesInClassification = priorCounts.get(posteriorCount.getKey());
 				for (Entry<Class<? extends Feature<?>>, FeatureCounts> featureCount: posteriorCount.getValue().featureCounts.entrySet()){
@@ -221,13 +230,17 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 						
 						Feature<?> featureInstance = feature.getKey().getFeature();
 						
-						LOG.debug("p("+feature.getKey().getFeatureType().getSimpleName()+"#"+feature.getKey().getFeature().getValue()+"|"+posteriorCount.getKey()+") = "+feature.getValue()+" / "+totalInstancesInClassification +" = "+featurePosteriorProbability);
+						LOG.debug("p("+feature.getKey().getFeatureType().getSimpleName()+"#"+((featureInstance instanceof RangeFeature)?featureInstance.toString():featureInstance.getValue())+"|"+posteriorCount.getKey()+") = "+feature.getValue()+" / "+totalInstancesInClassification +" = "+featurePosteriorProbability);
 						
 						if (featureInstance == Features.MISSING){
-							// for all features add a count
+							// this should have already been dealt with and therefore should never happen
 							throw new UnsupportedOperationException();
 						} else if (featureInstance instanceof DiscreteFeature){
-							featureProbabilities.put(feature.getKey(), featurePosteriorProbability);
+							ProbabilityBuilder builder = featureProbabilities.get(featureCount.getKey());
+							if (builder == null){
+								builder = new ProbabilityBuilder(featureCount.getKey());
+							}
+							builder.addProbabilityValue(featureInstance, featurePosteriorProbability);
 						} else if (featureInstance instanceof ContinuousFeature){
 							// we should not be dealing with continuous features in this way. All continuous features should have been quantised by this point
 							throw new UnsupportedOperationException();
@@ -235,7 +248,12 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 					}
 				}
 				
-				likelihoodProbabilities.put(posteriorCount.getKey(), featureProbabilities);
+				likelihoodProbabilities.put(posteriorCount.getKey(), new HashMap<Class<? extends Feature<?>>, Probability>(Maps.transformValues(featureProbabilities, new Function<ProbabilityBuilder, Probability>(){
+					
+					public Probability apply(ProbabilityBuilder builder){
+						return builder.build();
+					}
+				})));
 			}
 			
 			return new NaiveBayesModel<CLASSIFICATION>(priorClassificationProbabilities, likelihoodProbabilities, new HashMap<FeatureDefinition, Double>(Maps.transformValues(priorFeatureCounts, new Function<Integer, Double>(){
@@ -301,6 +319,74 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 		
 		public String toString(){
 			return super.toString() + "("+(probability*100)+"%)";
+		}
+	}
+	
+	private static interface Probability{
+		
+		double getProbability(Feature<?> feature);
+	}
+	
+	private static class DiscreteProbability implements Probability{
+
+		private final Map<? extends Feature<?>, Double> valueProbabilities;
+		
+		private DiscreteProbability(Map<? extends Feature<?>, Double> valueProbabilities){
+			this.valueProbabilities = valueProbabilities;
+		}
+		@Override
+		public double getProbability(Feature<?> feature) {
+			return valueProbabilities.get(feature);
+		}
+	}
+	
+	private static class RangeBasedProbability implements Probability {
+
+		private final Map<RangeFeature<?>, Double> rangeProbabilities;
+		private final List<RangeFeature<?>> binarySearch;
+		
+		private RangeBasedProbability(Map<RangeFeature<?>, Double> rangeProbabilities){
+			this.rangeProbabilities = rangeProbabilities;
+			
+			List<RangeFeature<?>> binarySearch = new ArrayList<RangeFeature<?>>(rangeProbabilities.keySet());
+			
+			Collections.sort(binarySearch);
+			
+			this.binarySearch = Collections.unmodifiableList(binarySearch);
+		}
+		@Override
+		public double getProbability(Feature<?> feature) {
+			int foundRangeIndex = Collections.binarySearch(binarySearch, feature);
+			
+			if (foundRangeIndex != -1){
+				return rangeProbabilities.get(binarySearch.get(foundRangeIndex));
+			} else {
+				throw new IllegalStateException("Unknown range found for value: "+feature);
+			}
+		}
+	}
+	
+	private static class ProbabilityBuilder{
+		
+		private final Map<Feature<?>, Double> rawProbabilities = new HashMap<Feature<?>, Double>();
+		private final Class<? extends Feature<?>> featureType;
+		
+		private ProbabilityBuilder(Class<? extends Feature<?>> featureType){
+			this.featureType = featureType;
+		}
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		private Probability build(){
+			if (featureType.isAssignableFrom(DiscreteFeature.class)){
+				return new DiscreteProbability(rawProbabilities);
+			} else if (featureType.isAssignableFrom(RangeFeature.class)){
+				return new RangeBasedProbability((Map<RangeFeature<?>, Double>)(Map)rawProbabilities);
+			} else {
+				throw new IllegalStateException("Unknown type: "+featureType);
+			}
+		}
+		
+		private void addProbabilityValue(Feature<?> featureValue, double probability){
+			rawProbabilities.put(featureValue, probability);
 		}
 	}
 }
