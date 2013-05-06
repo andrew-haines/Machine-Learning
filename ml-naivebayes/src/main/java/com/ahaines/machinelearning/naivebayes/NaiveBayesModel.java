@@ -28,6 +28,7 @@ import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuanti
 import com.ahaines.machinelearning.api.dataset.quantiser.RangeFeature;
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Maps.EntryTransformer;
 
 public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implements Model{
 
@@ -230,7 +231,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 						
 						Feature<?> featureInstance = feature.getKey().getFeature();
 						
-						LOG.debug("p("+feature.getKey().getFeatureType().getSimpleName()+"#"+((featureInstance instanceof RangeFeature)?featureInstance.toString():featureInstance.getValue())+"|"+posteriorCount.getKey()+") = "+feature.getValue()+" / "+totalInstancesInClassification +" = "+featurePosteriorProbability);
+						LOG.debug("p("+getFeatureString(feature.getKey())+"|"+posteriorCount.getKey()+") = "+feature.getValue()+" / "+totalInstancesInClassification +" = "+featurePosteriorProbability);
 						
 						if (featureInstance == Features.MISSING){
 							// this should have already been dealt with and therefore should never happen
@@ -256,12 +257,18 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 				})));
 			}
 			
-			return new NaiveBayesModel<CLASSIFICATION>(priorClassificationProbabilities, likelihoodProbabilities, new HashMap<FeatureDefinition, Double>(Maps.transformValues(priorFeatureCounts, new Function<Integer, Double>(){
+			return new NaiveBayesModel<CLASSIFICATION>(priorClassificationProbabilities, likelihoodProbabilities, new HashMap<FeatureDefinition, Double>(Maps.transformEntries(priorFeatureCounts, new EntryTransformer<FeatureDefinition, Integer, Double>(){
 				
-				public Double apply(Integer value){
-					return (double)value / (double)totalInstancesSeen;
+				public Double transformEntry(FeatureDefinition definition, Integer value){
+					double priorProbability = (double)value / (double)totalInstancesSeen;
+					LOG.debug("p("+getFeatureString(definition)+") = "+value+" / "+totalInstancesSeen+" = "+priorProbability);
+					return priorProbability;
 				}
 			})));
+		}
+
+		private String getFeatureString(FeatureDefinition feature) {
+			return feature.getFeatureType().getSimpleName()+"#"+((feature.getFeature() instanceof RangeFeature)?feature.getFeature().toString():feature.getFeature().getValue());
 		}
 	}
 	
@@ -345,12 +352,13 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 		private final Map<RangeFeature<?>, Double> rangeProbabilities;
 		private final List<RangeFeature<?>> binarySearch;
 		
+		@SuppressWarnings({ "rawtypes", "unchecked" })
 		private RangeBasedProbability(Map<RangeFeature<?>, Double> rangeProbabilities){
 			this.rangeProbabilities = rangeProbabilities;
 			
 			List<RangeFeature<?>> binarySearch = new ArrayList<RangeFeature<?>>(rangeProbabilities.keySet());
 			
-			Collections.sort(binarySearch);
+			Collections.sort((List)binarySearch);
 			
 			this.binarySearch = Collections.unmodifiableList(binarySearch);
 		}
