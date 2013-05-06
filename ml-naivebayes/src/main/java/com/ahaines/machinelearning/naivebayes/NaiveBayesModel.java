@@ -242,6 +242,8 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 								builder = new ProbabilityBuilder(featureCount.getKey());
 							}
 							builder.addProbabilityValue(featureInstance, featurePosteriorProbability);
+							
+							featureProbabilities.put(featureCount.getKey(), builder);
 						} else if (featureInstance instanceof ContinuousFeature){
 							// we should not be dealing with continuous features in this way. All continuous features should have been quantised by this point
 							throw new UnsupportedOperationException();
@@ -384,9 +386,9 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 		}
 		@SuppressWarnings({ "rawtypes", "unchecked" })
 		private Probability build(){
-			if (featureType.isAssignableFrom(DiscreteFeature.class)){
+			if (DiscreteFeature.class.isAssignableFrom(featureType)){
 				return new DiscreteProbability(rawProbabilities);
-			} else if (featureType.isAssignableFrom(RangeFeature.class)){
+			} else if (RangeFeature.class.isAssignableFrom(featureType)){
 				return new RangeBasedProbability((Map<RangeFeature<?>, Double>)(Map)rawProbabilities);
 			} else {
 				throw new IllegalStateException("Unknown type: "+featureType);
