@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +27,6 @@ import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuanti
 import com.ahaines.machinelearning.api.dataset.quantiser.RangeFeature;
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Maps.EntryTransformer;
 
 public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implements Model{
 
@@ -184,6 +182,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 			accumulator.put(key, currentCount+amount);
 		}
 
+		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public NaiveBayesModel<CLASSIFICATION> getModel() {
 			
 			// now calculate the prior and posterior probabilities
@@ -205,10 +204,10 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 			// continuous quantisation
 			
 			for (final Class<? extends ContinuousFeature<?>> featureType: continuousFeatures){
-				quantiser.quantise(allInstances, featureType, new QuantiserEventProcessor() {
+				quantiser.quantise(allInstances, (Class)featureType, new QuantiserEventProcessor() {
 					
 					@Override
-					public void newRangeDetermined(RangeFeature<? extends Number> range, Iterable<ClassifiedFeatureSet> instancesInSplit) {
+					public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> range, Iterable<ClassifiedFeatureSet> instancesInSplit) {
 						for (ClassifiedFeatureSet instance: instancesInSplit){
 							CLASSIFICATION instanceClass = getClassOfInstance(instance);
 							

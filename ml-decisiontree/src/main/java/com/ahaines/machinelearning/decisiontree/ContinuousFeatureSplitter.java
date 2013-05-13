@@ -15,7 +15,7 @@ import com.ahaines.machinelearning.decisiontree.DecisionTreeModelService.Split;
 
 public interface ContinuousFeatureSplitter {
 
-	Iterable<Split> splitInstances(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<?>> featureType);
+	<T extends Number & Comparable<T>> Iterable<Split> splitInstances(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<T>> featureType);
 	
 	public static class ContinuousFeatureSplitters {
 		
@@ -27,7 +27,7 @@ public interface ContinuousFeatureSplitter {
 			return new ContinuousFeatureSplitter(){
 
 				@Override
-				public Iterable<Split> splitInstances(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<?>> featureType) {
+				public <T extends Number & Comparable<T>> Iterable<Split> splitInstances(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<T>> featureType) {
 					
 					return getSplits(instances, featureType, ContinuousFeatureQuantisers.getAveragePivotQuantiser());
 				}
@@ -35,12 +35,12 @@ public interface ContinuousFeatureSplitter {
 			};
 		}
 		
-		private static Iterable<Split> getSplits(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<?>> featureType, ContinuousFeatureQuantiser quantiser){
+		private static <T extends Number & Comparable<T>> Iterable<Split> getSplits(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<T>> featureType, ContinuousFeatureQuantiser quantiser){
 			final Collection<Split> splits = new LinkedList<Split>();
 			quantiser.quantise(instances, featureType, new QuantiserEventProcessor(){
 
 				@Override
-				public void newRangeDetermined(RangeFeature<?> newRange, Iterable<ClassifiedFeatureSet> instancesInSplit) {
+				public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange, Iterable<ClassifiedFeatureSet> instancesInSplit) {
 					splits.add(new Split(new FeatureDefinition(newRange), Utils.toCollection(instancesInSplit)));
 				}
 			});
@@ -58,7 +58,7 @@ public interface ContinuousFeatureSplitter {
 			return new ContinuousFeatureSplitter(){
 
 				@Override
-				public Iterable<Split> splitInstances(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<?>> featureType) {
+				public <T extends Number & Comparable<T>> Iterable<Split> splitInstances(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<T>> featureType) {
 					
 					return getSplits(instances, featureType, ContinuousFeatureQuantisers.getClusteredQuantiser());
 				}

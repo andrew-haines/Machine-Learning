@@ -149,7 +149,7 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 		return new HomogeniousRating(maximumClassificationProportion, currentBestClassification);
 	}
 	
-	@SuppressWarnings("unchecked")	
+	@SuppressWarnings({ "unchecked", "rawtypes" })	
 	private FeatureSplits getBestSplit(Iterable<ClassifiedFeatureSet> instances, Iterable<Class<? extends Feature<?>>> featureTypes) {
 		double minImpurity = Double.MAX_VALUE;
 		Iterable<Split> bestSplits = null;
@@ -161,7 +161,7 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 			if (DiscreteFeature.class.isAssignableFrom(featureType)){
 				splits = splitDiscreteFeature(instances, (Class<? extends DiscreteFeature<?>>) featureType);
 			} else if (ContinuousFeature.class.isAssignableFrom(featureType)){
-				splits = splitContinuousFeature(instances, (Class<? extends ContinuousFeature<?>>)featureType);
+				splits = splitContinuousFeature(instances, (Class)featureType);
 			} else{
 				throw new IllegalArgumentException("unknown type of feature");
 			}
@@ -193,7 +193,7 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 		
 	}
 
-	private Iterable<Split> splitContinuousFeature(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<?>> featureType) {
+	private <T extends Number & Comparable<T>> Iterable<Split> splitContinuousFeature(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<T>> featureType) {
 		
 		return continousFeatureSplitter.splitInstances(instances, featureType);
 	}

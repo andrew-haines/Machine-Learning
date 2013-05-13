@@ -23,7 +23,6 @@ import com.ahaines.machinelearning.api.dataset.Identifier;
 import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantisers;
 import com.ahaines.machinelearning.naivebayes.NaiveBayesModel.ClassificationProbability;
 import com.ahaines.machinelearning.naivebayes.NaiveBayesModelService.ClassifiedProbabilityDataSet;
-import com.ahaines.machinelearning.test.spam.Email;
 import com.ahaines.machinelearning.test.spam.Email.EmailClassification;
 import com.ahaines.machinelearning.test.spam.Email.Features;
 import com.ahaines.machinelearning.test.spam.Email.Features.Contains;
