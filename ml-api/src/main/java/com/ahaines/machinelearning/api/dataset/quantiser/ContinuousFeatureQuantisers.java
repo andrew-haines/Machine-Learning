@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.ahaines.machinelearning.api.dataset.ClassifiedFeatureSet;
 import com.ahaines.machinelearning.api.dataset.ContinuousFeature;
 import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
@@ -122,6 +121,23 @@ public class ContinuousFeatureQuantisers {
 		};
 	}
 	
+	/**
+	 * Returns a feature quantiser that will break a continuous feature into {@link #numBuckets} sizes. The buckets have an equal range of values they respond to. The buckets split the
+	 * range between the min and max of the instances quantised with two buckets used for the remaining real numbers possible. The follows the general form of:
+	 * 
+	 * infinity < min
+	 * min < range[1]
+	 * range[1] < range[2]
+	 * range[2] < range[3]
+	 * ...
+	 * range[n-3] < range[n-2] // note that the -2 is because 2 of the ranges are used for the < min and > max extermity bounds
+	 * max > infinity
+	 * 
+	 * The minimum buckets you can have is 3 so if this is < 3, it will be bottom capped to 3
+	 * 
+	 * @param numBuckets
+	 * @return
+	 */
 	public static ContinuousFeatureQuantiser getConstantBucketQuantiser(final int numBuckets){
 		return new ContinuousFeatureQuantiser(){
 
@@ -131,6 +147,7 @@ public class ContinuousFeatureQuantisers {
 				
 				final NumberConverter<T> converter = sortedList.get(0).getFeature(featureQuantiserType).getNumberConverter();
 				T minValue = sortedList.get(0).getFeature(featureQuantiserType).getValue();
+				minValue = converter.castToType(minValue.doubleValue() + 1);
 				T maxValue = sortedList.get(sortedList.size()-1).getFeature(featureQuantiserType).getValue();
 				
 				RangeFeature<T> lowerBound = new RangeFeature<T>(converter.getMinPossibleValue(), minValue);
@@ -141,25 +158,41 @@ public class ContinuousFeatureQuantisers {
 				
 				int numRangeBuckets = numBuckets - 2; // subtract the 2 extremity bounds
 				
+				if (numRangeBuckets < 1){
+					numRangeBuckets = 1; // we have to have at least 1 range bucket
+				}
+				
 				double range = (maxValue.doubleValue() - minValue.doubleValue()) / numRangeBuckets;
 				final AtomicInteger latestInstanceIndex = new AtomicInteger(1);
 				for (int i = 0; i < numRangeBuckets; i++){
 					double lowerBoundRange = range * i + minValue.doubleValue();
 					final double upperBoundRange = lowerBoundRange + range;
 					
-					RangeFeature<T> newRange = new RangeFeature<T>(converter.castToType(lowerBoundRange), converter.castToType(upperBoundRange));
-					final int seekForwardAmount = latestInstanceIndex.get(); // optimisation because we dont want to 
+					final T typedLowerBound = converter.castToType(lowerBoundRange);
+					final T typedUpperBound = converter.castToType(upperBoundRange);
+					
+					RangeFeature<T> newRange = new RangeFeature<T>(typedLowerBound, typedUpperBound);
+					final int seekForwardAmount = latestInstanceIndex.get(); // optimisation because we dont want to re-iterate over instance that we have already added. Note that this only works if, the caller iterates.
 					processor.newRangeDetermined(newRange, new Iterable<ClassifiedFeatureSet>(){
 
 						@Override
 						public Iterator<ClassifiedFeatureSet> iterator() {
 							return new Iterator<ClassifiedFeatureSet>(){
 								
-								private int currentIndex = seekForwardAmount + 1;
+								private int currentIndex = seekForwardAmount;
 
 								@Override
 								public boolean hasNext() {
-									return sortedList.size() > currentIndex && sortedList.get(currentIndex).getFeature(featureQuantiserType).getValue().compareTo(converter.castToType(upperBoundRange)) < 0;
+									
+									boolean isInRange = false;
+									while(!isInRange && currentIndex < sortedList.size()){
+										if (sortedList.get(currentIndex).getFeature(featureQuantiserType).getValue().compareTo(typedLowerBound) < 0){
+											currentIndex++;
+										} else{
+											isInRange = true;
+										}
+									}
+									return sortedList.size() > currentIndex && sortedList.get(currentIndex).getFeature(featureQuantiserType).getValue().compareTo(typedUpperBound) < 0;
 								}
 
 								@Override

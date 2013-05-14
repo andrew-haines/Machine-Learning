@@ -1,6 +1,7 @@
 package com.ahaines.machinelearning.api.dataset.quantiser;
 
 
+import com.ahaines.machinelearning.api.dataset.ContinuousFeature;
 import com.ahaines.machinelearning.api.dataset.Feature;
 
 /**
@@ -72,14 +73,16 @@ public class RangeFeature<T extends Number & Comparable<T>> implements Feature<T
 	public int compareTo(Feature<T> o) {
 		if (o instanceof RangeFeature){
 			return this.lowerBound.compareTo(((RangeFeature<T>)o).lowerBound);
-		} else {
-			if (o.intersects(o)){
-				return 0;
-			} else if (this.lowerBound.compareTo(o.getValue()) > 0){
-				return -1;
-			} else {
+		} else if (o instanceof ContinuousFeature){ // bit mental this bit is. A way of using a binary search to determine where a standard continuous value sits with ranges. Ideally this should be a seperate comparator to isolate the concerns better 
+			if (this.lowerBound.compareTo(o.getValue()) > 0){
 				return 1;
+			} else if (inclusive && this.upperBound.compareTo(o.getValue()) < 0 || (!inclusive && this.upperBound.compareTo(o.getValue()) <= 0)){
+				return -1;
+			} else{
+				return 0;
 			}
+		} else{
+			throw new IllegalArgumentException("Cant compare a range value to anything else then another range value or a continuous value that sits in this range");
 		}
 	}
 }

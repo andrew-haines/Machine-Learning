@@ -56,8 +56,9 @@ public interface FeatureSet extends Identifiable{
 		}
 		
 		public String toString(){
-			StringBuilder builder = new StringBuilder();
-			
+			StringBuilder builder = new StringBuilder("(");
+			builder.append(getId());
+			builder.append(")");
 			for (Entry<Class<? extends Feature<?>>, Feature<?>> feature: features.entrySet()){
 				builder.append("{")
 					   .append(feature.getKey().getSimpleName())

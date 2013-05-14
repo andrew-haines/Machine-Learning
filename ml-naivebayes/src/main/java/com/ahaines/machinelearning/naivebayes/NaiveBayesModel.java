@@ -31,6 +31,7 @@ import com.google.common.collect.Maps;
 public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implements Model{
 
 	private static final Logger LOG = LoggerFactory.getLogger(NaiveBayesModel.class);
+	private static final double DEFAULT_NEGLIGABLE_PROBABILITY = 0.001;
 	
 	private final Map<CLASSIFICATION, Double> priorClassificationProbabilities;
 	private final Map<CLASSIFICATION, Map<Class<? extends Feature<?>>, Probability>> likelihoodProbilities;
@@ -70,7 +71,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 					// if this is a continuous probability then we need to consider all the range features and use the probability of the 
 					Probability probability = givenClassificationProbabilities.get(featureType);
 					if (probability == null){
-						posteriorProbabilityProduct *= 0.01; // not possible. no probabilities determined for this value so this means the likely hood is very small. add an appropriately small probability
+						posteriorProbabilityProduct *= DEFAULT_NEGLIGABLE_PROBABILITY; // not possible. no probabilities determined for this value so this means the likely hood is very small. add an appropriately small probability
 						continue;
 					}
 					posteriorProbabilityProduct *= probability.getProbability(featureValue);
@@ -208,6 +209,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 					
 					@Override
 					public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> range, Iterable<ClassifiedFeatureSet> instancesInSplit) {
+						LOG.debug("range determined as: "+range);
 						for (ClassifiedFeatureSet instance: instancesInSplit){
 							CLASSIFICATION instanceClass = getClassOfInstance(instance);
 							
@@ -236,7 +238,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 						if (featureInstance == Features.MISSING){
 							// this should have already been dealt with and therefore should never happen
 							throw new UnsupportedOperationException();
-						} else if (featureInstance instanceof DiscreteFeature){
+						} else if (featureInstance instanceof DiscreteFeature || featureInstance instanceof RangeFeature){
 							ProbabilityBuilder builder = featureProbabilities.get(featureCount.getKey());
 							if (builder == null){
 								builder = new ProbabilityBuilder(featureCount.getKey());
@@ -383,10 +385,10 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 		public double getProbability(Feature<?> feature) {
 			int foundRangeIndex = Collections.binarySearch(binarySearch, feature);
 			
-			if (foundRangeIndex != -1){
-				return rangeProbabilities.get(binarySearch.get(foundRangeIndex));
+			if (foundRangeIndex < 0){
+				return DEFAULT_NEGLIGABLE_PROBABILITY;
 			} else {
-				throw new IllegalStateException("Unknown range found for value: "+feature);
+				return rangeProbabilities.get(binarySearch.get(foundRangeIndex));
 			}
 		}
 	}

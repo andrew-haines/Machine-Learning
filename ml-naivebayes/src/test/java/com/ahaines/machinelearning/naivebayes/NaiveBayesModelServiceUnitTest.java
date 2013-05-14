@@ -7,7 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +50,7 @@ public class NaiveBayesModelServiceUnitTest {
 	
 	@Before
 	public void before(){
-		candidate = new NaiveBayesModelService<EmailClassification>(ContinuousFeatureQuantisers.getClusteredQuantiser());
+		candidate = new NaiveBayesModelService<EmailClassification>(ContinuousFeatureQuantisers.getConstantBucketQuantiser(4));
 	}
 	
 	private static Dataset<FeatureSet> loadContinuousTestSet() {
@@ -62,6 +61,10 @@ public class NaiveBayesModelServiceUnitTest {
 		builder.addInstance(createContinuousInstance(4, Contains.ABSENT, Contains.ABSENT, 78)); // should be spam
 		builder.addInstance(createContinuousInstance(5, Contains.ABSENT, Contains.ABSENT, 96)); // should be spam
 		builder.addInstance(createContinuousInstance(6, Contains.ABSENT, Contains.ABSENT, 104)); // should be spam
+		builder.addInstance(createContinuousInstance(7, Contains.ABSENT, Contains.ABSENT, 2)); // should be ham
+		builder.addInstance(createContinuousInstance(8, Contains.ABSENT, Contains.ABSENT, 45)); // should be ham
+		builder.addInstance(createContinuousInstance(9, Contains.ABSENT, Contains.ABSENT, 46)); // should be spam
+		builder.addInstance(createContinuousInstance(10, Contains.ABSENT, Contains.ABSENT, 90)); // should be spam
 		return builder.build();
 	}
 
@@ -76,7 +79,7 @@ public class NaiveBayesModelServiceUnitTest {
 		builder.addInstance(createContinuousInstance(3, Contains.ABSENT, Contains.ABSENT, 2));
 		classifications.add(createClassification(3, EmailClassification.HAM));
 		builder.addInstance(createContinuousInstance(4, Contains.ABSENT, Contains.ABSENT, 42));
-		classifications.add(createClassification(4, EmailClassification.HAM));
+		classifications.add(createClassification(4, EmailClassification.SPAM));
 		builder.addInstance(createContinuousInstance(5, Contains.ABSENT, Contains.ABSENT, 32));
 		classifications.add(createClassification(5, EmailClassification.HAM));
 		builder.addInstance(createContinuousInstance(6, Contains.ABSENT, Contains.ABSENT, 76));
@@ -94,7 +97,7 @@ public class NaiveBayesModelServiceUnitTest {
 		builder.addInstance(createContinuousInstance(12, Contains.ABSENT, Contains.ABSENT, 87));
 		classifications.add(createClassification(12, EmailClassification.SPAM));
 		builder.addInstance(createContinuousInstance(13, Contains.ABSENT, Contains.ABSENT, 77));
-		classifications.add(createClassification(13, EmailClassification.HAM));
+		classifications.add(createClassification(13, EmailClassification.SPAM));
 		
 		return ClassifiedDataset.create(builder.build(), classifications);
 	}
@@ -188,8 +191,8 @@ public class NaiveBayesModelServiceUnitTest {
 		assertThat(classification.getProbability(), is(equalTo(0.8971042962639604)));
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
-	@Ignore
 	public void givenContinuousCandidate_whenTraining2Instances_thenCorrectProbabilitiesCalculated(){
 		LOG.debug("training with continuous dataset");
 		NaiveBayesModel<EmailClassification> model = candidate.trainModel(TEST_CONTINUOUS_TRAINING_SET);
@@ -199,30 +202,50 @@ public class NaiveBayesModelServiceUnitTest {
 		ClassificationProbability<EmailClassification> classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(1)).getClassification();
 		
 		assertThat(classification.getValue(), is(equalTo(EmailClassification.HAM)));
-		//assertThat(classification.getProbability(), is(equalTo(0.8341937565540051)));
+		assertThat(classification.getProbability(), is(equalTo(0.6666666666666666)));
 		
 		classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(2)).getClassification();
 		
-		assertThat(classification.getValue(), is(equalTo(EmailClassification.HAM)));
-		//assertThat(classification.getProbability(), is(equalTo(0.8971042962639604)));
+		assertThat(classification.getValue(), is(equalTo(EmailClassification.SPAM)));
+		assertThat(classification.getProbability(), is(equalTo(0.8571428571428572)));
 		
 		classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(3)).getClassification();
 		
-		assertThat(classification.getValue(), is(equalTo(EmailClassification.HAM)));
-		//assertThat(classification.getProbability(), is(equalTo(0.8971042962639604)));
+		assertThat(classification.getValue(), is(equalTo(EmailClassification.SPAM)));
+		assertThat(classification.getProbability(), is(equalTo(0.8571428571428572)));
 		
 		classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(4)).getClassification();
 		
 		assertThat(classification.getValue(), is(equalTo(EmailClassification.SPAM)));
-		//assertThat(classification.getProbability(), is(equalTo(0.8971042962639604)));
+		assertThat(classification.getProbability(), is(equalTo(0.8571428571428572)));
 		
 		classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(5)).getClassification();
 		
 		assertThat(classification.getValue(), is(equalTo(EmailClassification.SPAM)));
-		//assertThat(classification.getProbability(), is(equalTo(0.8971042962639604)));
+		assertThat(classification.getProbability(), is(equalTo(1.0)));
 		classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(6)).getClassification();
 		
 		assertThat(classification.getValue(), is(equalTo(EmailClassification.SPAM)));
-		//assertThat(classification.getProbability(), is(equalTo(0.8971042962639604)));
+		assertThat(classification.getProbability(), is(equalTo(1.0)));
+		
+		classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(7)).getClassification();
+		
+		assertThat(classification.getValue(), is(equalTo(EmailClassification.HAM)));
+		assertThat(classification.getProbability(), is(equalTo(1.0)));
+		
+		classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(8)).getClassification();
+		
+		assertThat(classification.getValue(), is(equalTo(EmailClassification.HAM)));
+		assertThat(classification.getProbability(), is(equalTo(0.6666666666666666)));
+		
+		classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(9)).getClassification();
+		
+		assertThat(classification.getValue(), is(equalTo(EmailClassification.SPAM)));
+		assertThat(classification.getProbability(), is(equalTo(0.8571428571428572)));
+		
+		classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(10)).getClassification();
+		
+		assertThat(classification.getValue(), is(equalTo(EmailClassification.SPAM)));
+		assertThat(classification.getProbability(), is(equalTo(1.0)));
 	}
 }

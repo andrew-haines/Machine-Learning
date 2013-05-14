@@ -18,6 +18,7 @@ import com.ahaines.machinelearning.test.spam.Email;
 import com.ahaines.machinelearning.test.spam.Email.EmailClassification;
 import com.ahaines.machinelearning.test.spam.Email.Features;
 import com.ahaines.machinelearning.test.spam.Email.Features.Contains;
+import com.google.common.collect.Iterables;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
@@ -188,10 +189,86 @@ public class ContinuousFeatureQuantisersUnitTest {
 		assertThat(Utils.toCollection(instances.get(7)).toArray(new ClassifiedFeatureSet[]{})[2].getId(), is(equalTo(Identifier.FACTORY.createIdentifier(1))));
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void givenConstantBucketQuantiser_whenCallingQuantise_thenExpectedCallbacksInvokedSplitOccurs(){
 		final List<RangeFeature<? extends Number>> ranges = new ArrayList<RangeFeature<? extends Number>>();
 		final List<Iterable<ClassifiedFeatureSet>> instances = new ArrayList<Iterable<ClassifiedFeatureSet>>();
+		
+		constantBucketCandidate.quantise(TEST_INSTANCES, Email.Features.HoursIgnoredFeature.class, new QuantiserEventProcessor(){
+
+			@Override
+			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<ClassifiedFeatureSet> instancesInSplit) {
+				ranges.add(newRange);
+				System.out.println(newRange);
+				instances.add(instancesInSplit);
+			}
+		});
+		
+		assertThat(ranges.size(), is(equalTo(10)));
+		
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(Integer.MIN_VALUE)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(-45)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(0)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(21)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(22)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(25)), is(equalTo(false)));
+		assertThat(Iterables.size(instances.get(0)), is(equalTo(1)));
+		assertThat(Iterables.get(instances.get(0), 0).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(13))));
+		
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(-45)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(0)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(21)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(22)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(23)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(25)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(30)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(32)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(33)), is(equalTo(false)));
+		assertThat(Iterables.size(instances.get(1)), is(equalTo(2)));
+		assertThat(Iterables.get(instances.get(1), 0).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(3))));
+		assertThat(Iterables.get(instances.get(1), 1).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(2))));
+	
+		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(30)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(31)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(34)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(39)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(40)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(42)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(43)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(45)), is(equalTo(false)));
+		
+		assertThat(Iterables.size(instances.get(2)), is(equalTo(0)));
+		
+		assertThat(((RangeFeature<Integer>)ranges.get(3)).intersects(new Features.HoursIgnoredFeature(42)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(3)).intersects(new Features.HoursIgnoredFeature(43)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(3)).intersects(new Features.HoursIgnoredFeature(45)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(3)).intersects(new Features.HoursIgnoredFeature(52)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(3)).intersects(new Features.HoursIgnoredFeature(53)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(3)).intersects(new Features.HoursIgnoredFeature(56)), is(equalTo(false)));
+		
+		assertThat(Iterables.size(instances.get(3)), is(equalTo(3)));
+		assertThat(Iterables.get(instances.get(3), 0).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(6))));
+		assertThat(Iterables.get(instances.get(3), 1).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(7))));
+		assertThat(Iterables.get(instances.get(3), 2).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(11))));
+		
+		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(99)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(102)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(103)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(150)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(564)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(Integer.MAX_VALUE)), is(equalTo(true)));
+		assertThat(Iterables.size(instances.get(9)), is(equalTo(1)));
+		assertThat(Iterables.get(instances.get(9), 0).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(5))));
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void givenConstantBucketQuantiser_whenCallingQuantiseWith2Buckets_thenExpectedCallbacksInvokedSplitOccurs(){
+		final List<RangeFeature<? extends Number>> ranges = new ArrayList<RangeFeature<? extends Number>>();
+		final List<Iterable<ClassifiedFeatureSet>> instances = new ArrayList<Iterable<ClassifiedFeatureSet>>();
+		
+		constantBucketCandidate = ContinuousFeatureQuantisers.getConstantBucketQuantiser(2);
 		
 		constantBucketCandidate.quantise(TEST_INSTANCES, Email.Features.HoursIgnoredFeature.class, new QuantiserEventProcessor(){
 
@@ -203,39 +280,48 @@ public class ContinuousFeatureQuantisersUnitTest {
 			}
 		});
 		
-		assertThat(ranges.size(), is(equalTo(10)));
+		assertThat(ranges.size(), is(equalTo(3))); // minimum bucket size has to be 3
 		
 		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(Integer.MIN_VALUE)), is(equalTo(true)));
 		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(-45)), is(equalTo(true)));
 		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(0)), is(equalTo(true)));
 		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(21)), is(equalTo(true)));
-		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(22)), is(equalTo(false)));
-		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(25)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(22)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(23)), is(equalTo(false)));
+		assertThat(Iterables.size(instances.get(0)), is(equalTo(1)));
+		assertThat(Iterables.get(instances.get(0), 0).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(13))));
 		
-		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(-45)), is(equalTo(false)));
 		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(0)), is(equalTo(false)));
 		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(21)), is(equalTo(false)));
-		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(22)), is(equalTo(true)));
-		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(25)), is(equalTo(true)));
-		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(30)), is(equalTo(true)));
-		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(31)), is(equalTo(true)));
-		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(32)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(22)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(23)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(56)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(85)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(102)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(103)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(120)), is(equalTo(false)));
+		assertThat(Iterables.size(instances.get(1)), is(equalTo(12)));
+		assertThat(Iterables.get(instances.get(1), 0).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(3))));
+		assertThat(Iterables.get(instances.get(1), 1).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(2))));
+		assertThat(Iterables.get(instances.get(1), 2).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(6))));
+		assertThat(Iterables.get(instances.get(1), 3).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(7))));
+		assertThat(Iterables.get(instances.get(1), 4).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(11))));
+		assertThat(Iterables.get(instances.get(1), 5).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(9))));
+		assertThat(Iterables.get(instances.get(1), 6).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(14))));
+		assertThat(Iterables.get(instances.get(1), 7).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(4))));
+		assertThat(Iterables.get(instances.get(1), 8).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(8))));
+		assertThat(Iterables.get(instances.get(1), 9).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(12))));
+		assertThat(Iterables.get(instances.get(1), 10).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(1))));
+		assertThat(Iterables.get(instances.get(1), 11).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(10))));
 		
-		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(30)), is(equalTo(false)));
-		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(31)), is(equalTo(false)));
-		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(34)), is(equalTo(true)));
-		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(39)), is(equalTo(true)));
-		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(40)), is(equalTo(true)));
-		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(41)), is(equalTo(true)));
-		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(42)), is(equalTo(false)));
-		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(45)), is(equalTo(false)));
-		
-		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(99)), is(equalTo(false)));
-		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(102)), is(equalTo(false)));
-		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(103)), is(equalTo(true)));
-		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(150)), is(equalTo(true)));
-		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(564)), is(equalTo(true)));
-		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(Integer.MAX_VALUE)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(99)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(102)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(103)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(150)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(564)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(Integer.MAX_VALUE)), is(equalTo(true)));
+		assertThat(Iterables.size(instances.get(2)), is(equalTo(1)));
+		assertThat(Iterables.get(instances.get(2), 0).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(5))));
 	}
 	
 	private static ClassifiedFeatureSet createClassifiedInstance(int id, Contains viagra, Contains enlargment, int hoursIgnored, EmailClassification classification){
