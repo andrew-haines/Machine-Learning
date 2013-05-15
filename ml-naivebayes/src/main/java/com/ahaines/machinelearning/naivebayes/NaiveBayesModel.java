@@ -28,17 +28,17 @@ import com.ahaines.machinelearning.api.dataset.quantiser.RangeFeature;
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 
-public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implements Model{
+public class NaiveBayesModel implements Model{
 
 	private static final Logger LOG = LoggerFactory.getLogger(NaiveBayesModel.class);
 	private static final double DEFAULT_NEGLIGABLE_PROBABILITY = 0.001;
 	
-	private final Map<CLASSIFICATION, Double> priorClassificationProbabilities;
-	private final Map<CLASSIFICATION, Map<Class<? extends Feature<?>>, Probability>> likelihoodProbilities;
+	private final Map<Enum<?>, Double> priorClassificationProbabilities;
+	private final Map<Enum<?>, Map<Class<? extends Feature<?>>, Probability>> likelihoodProbilities;
 	private final Map<Class<? extends Feature<?>>, Probability> priorFeatureProbabilities;
 	private final Metrics metrics;
 	
-	public NaiveBayesModel(Map<CLASSIFICATION, Double> priorClassificationProbabilities, Map<CLASSIFICATION, Map<Class<? extends Feature<?>>, Probability>> likelihoodProbilities, Map<Class<? extends Feature<?>>, Probability> priorFeatureProbabilities){
+	public NaiveBayesModel(Map<Enum<?>, Double> priorClassificationProbabilities, Map<Enum<?>, Map<Class<? extends Feature<?>>, Probability>> likelihoodProbilities, Map<Class<? extends Feature<?>>, Probability> priorFeatureProbabilities){
 		this.priorClassificationProbabilities = Collections.unmodifiableMap(priorClassificationProbabilities);
 		this.likelihoodProbilities = Collections.unmodifiableMap(likelihoodProbilities);
 		this.metrics = new Metrics();
@@ -50,11 +50,12 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 		return metrics;
 	}
 	
-	public ClassificationProbability<CLASSIFICATION> getClassification(FeatureSet instance) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public ClassificationProbability<?> getClassification(FeatureSet instance) {
 		double maxProbability = 0;
-		CLASSIFICATION maxClassification = null;
+		Enum<?> maxClassification = null;
 		
-		for(CLASSIFICATION classification: priorClassificationProbabilities.keySet()){
+		for(Enum<?> classification: priorClassificationProbabilities.keySet()){
 			
 			double posteriorProbabilityProduct = 1;
 			Map<Class<? extends Feature<?>>, Probability> givenClassificationProbabilities = likelihoodProbilities.get(classification);
@@ -89,7 +90,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 		if (maxClassification == null){
 			// just use the prior probabilities if there is no further information 
 			
-			for (Entry<CLASSIFICATION, Double> entry: priorClassificationProbabilities.entrySet()){
+			for (Entry<Enum<?>, Double> entry: priorClassificationProbabilities.entrySet()){
 				if (maxProbability < entry.getValue()){
 					maxProbability = entry.getValue();
 					maxClassification = entry.getKey();
@@ -101,7 +102,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 		
 		maxProbability = maxProbability / getPriorFeatureProbabilitiesProduct(instance);
 		
-		return new ClassificationProbability<CLASSIFICATION>(instance.getId(), maxClassification, maxProbability);
+		return new ClassificationProbability(instance.getId(), maxClassification, maxProbability);
 	}
 	
 	private double getPriorFeatureProbabilitiesProduct(FeatureSet instance) {
@@ -122,10 +123,10 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 		return priorProduct;
 	}
 
-	static class NaiveBayesModelFactory<CLASSIFICATION extends Enum<CLASSIFICATION>>{
+	static class NaiveBayesModelFactory{
 		
-		private final Map<CLASSIFICATION, Integer> priorCounts = new HashMap<CLASSIFICATION, Integer>();
-		private final Map<CLASSIFICATION, LikelihoodCounts> discreteFeatureCounts = new HashMap<CLASSIFICATION, LikelihoodCounts>();
+		private final Map<Enum<?>, Integer> priorCounts = new HashMap<Enum<?>, Integer>();
+		private final Map<Enum<?>, LikelihoodCounts> discreteFeatureCounts = new HashMap<Enum<?>, LikelihoodCounts>();
 		private final Set<Class<? extends ContinuousFeature<?>>> continuousFeatures = new HashSet<Class<? extends ContinuousFeature<?>>>();
 		private final Collection<ClassifiedFeatureSet> allInstances = new ArrayList<ClassifiedFeatureSet>();
 		
@@ -140,7 +141,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 		void addInstance(ClassifiedFeatureSet instance){
 			totalInstancesSeen++;
 			allInstances.add(instance);
-			CLASSIFICATION instanceClass = getClassOfInstance(instance);
+			Enum<?> instanceClass = getClassOfInstance(instance);
 			incrementCount(instanceClass, priorCounts);
 			for (Class<? extends Feature<?>> featureType: instance.getFeatureTypes()){
 				Feature<?> feature = instance.getFeature(featureType);
@@ -152,7 +153,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 			}
 		}
 		
-		private void addDiscreteFeatureCount(CLASSIFICATION instanceClass, Class<? extends Feature<?>> featureType, Feature<?> feature){
+		private void addDiscreteFeatureCount(Enum<?> instanceClass, Class<? extends Feature<?>> featureType, Feature<?> feature){
 			LikelihoodCounts counts = discreteFeatureCounts.get(instanceClass);
 			
 			if (counts == null){
@@ -164,9 +165,8 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 			discreteFeatureCounts.put(instanceClass, counts);
 		}
 		
-		@SuppressWarnings("unchecked")
-		private CLASSIFICATION getClassOfInstance(ClassifiedFeatureSet instance){
-			return (CLASSIFICATION)instance.getClassification().getValue();
+		private Enum<?> getClassOfInstance(ClassifiedFeatureSet instance){
+			return instance.getClassification().getValue();
 		}
 		
 		private <T> void incrementCount(T key, Map<T, Integer> accumulator){
@@ -184,17 +184,17 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 		}
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
-		public NaiveBayesModel<CLASSIFICATION> getModel() {
+		public NaiveBayesModel getModel() {
 			
 			// now calculate the prior and posterior probabilities
 			
-			Map<CLASSIFICATION, Double> priorClassificationProbabilities = new HashMap<CLASSIFICATION, Double>();
-			Map<CLASSIFICATION, Map<Class<? extends Feature<?>>, Probability>> likelihoodProbabilities = new HashMap<CLASSIFICATION, Map<Class<? extends Feature<?>>, Probability>>();
+			Map<Enum<?>, Double> priorClassificationProbabilities = new HashMap<Enum<?>, Double>();
+			Map<Enum<?>, Map<Class<? extends Feature<?>>, Probability>> likelihoodProbabilities = new HashMap<Enum<?>, Map<Class<? extends Feature<?>>, Probability>>();
 			Map<FeatureDefinition, Integer> priorFeatureCounts = new HashMap<FeatureDefinition, Integer>();
 			
 			// prior
 			
-			for (Entry<CLASSIFICATION, Integer> priorCount: priorCounts.entrySet()){
+			for (Entry<Enum<?>, Integer> priorCount: priorCounts.entrySet()){
 				double priorProbability = (double)priorCount.getValue() / (double)totalInstancesSeen;
 				priorClassificationProbabilities.put(priorCount.getKey(), priorProbability);
 				LOG.debug("p("+priorCount.getKey()+") = "+priorCount.getValue()+" / "+totalInstancesSeen+" = "+priorProbability);
@@ -211,7 +211,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 					public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> range, Iterable<ClassifiedFeatureSet> instancesInSplit) {
 						LOG.debug(featureType.getSimpleName()+" range determined as: "+range);
 						for (ClassifiedFeatureSet instance: instancesInSplit){
-							CLASSIFICATION instanceClass = getClassOfInstance(instance);
+							Enum<?> instanceClass = getClassOfInstance(instance);
 							
 							addDiscreteFeatureCount(instanceClass, featureType, range);
 						}
@@ -221,7 +221,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 			
 			//discrete
 			
-			for (Entry<CLASSIFICATION, LikelihoodCounts> posteriorCount: discreteFeatureCounts.entrySet()){
+			for (Entry<Enum<?>, LikelihoodCounts> posteriorCount: discreteFeatureCounts.entrySet()){
 				Map<Class<? extends Feature<?>>, ProbabilityBuilder> featureProbabilities = new HashMap<Class<? extends Feature<?>>, ProbabilityBuilder>();
 				
 				int totalInstancesInClassification = priorCounts.get(posteriorCount.getKey());
@@ -278,7 +278,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 				priorFeatureProbabilities.put(entry.getKey().getFeatureType(), builder);
 			}
 			
-			return new NaiveBayesModel<CLASSIFICATION>(priorClassificationProbabilities, likelihoodProbabilities, new HashMap<Class<? extends Feature<?>>, Probability>(Maps.transformValues(priorFeatureProbabilities, new Function<ProbabilityBuilder, Probability>(){
+			return new NaiveBayesModel(priorClassificationProbabilities, likelihoodProbabilities, new HashMap<Class<? extends Feature<?>>, Probability>(Maps.transformValues(priorFeatureProbabilities, new Function<ProbabilityBuilder, Probability>(){
 				
 				public Probability apply(ProbabilityBuilder value){
 					return value.build();

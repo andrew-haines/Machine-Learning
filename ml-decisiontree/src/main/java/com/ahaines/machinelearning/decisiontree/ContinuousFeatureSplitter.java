@@ -24,24 +24,16 @@ public interface ContinuousFeatureSplitter {
 		 * @return
 		 */
 		public static ContinuousFeatureSplitter getAverageFeatureSplitter(){
-			return new ContinuousFeatureSplitter(){
-
-				@Override
-				public <T extends Number & Comparable<T>> Iterable<Split> splitInstances(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<T>> featureType) {
-					
-					return getSplits(instances, featureType, ContinuousFeatureQuantisers.getAveragePivotQuantiser());
-				}
-				
-			};
+			return getFeatureSplitter(ContinuousFeatureQuantisers.getAveragePivotQuantiser());
 		}
 		
-		private static <T extends Number & Comparable<T>> Iterable<Split> getSplits(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<T>> featureType, ContinuousFeatureQuantiser quantiser){
+		private static <T extends Number & Comparable<T>> Iterable<Split> getSplits(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<T>> featureType, ContinuousFeatureQuantiser quantiser){
 			final Collection<Split> splits = new LinkedList<Split>();
 			quantiser.quantise(instances, featureType, new QuantiserEventProcessor(){
 
 				@Override
 				public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange, Iterable<ClassifiedFeatureSet> instancesInSplit) {
-					splits.add(new Split(new FeatureDefinition(newRange), Utils.toCollection(instancesInSplit)));
+					splits.add(new Split(new FeatureDefinition(newRange, featureType), Utils.toCollection(instancesInSplit)));
 				}
 			});
 
@@ -55,15 +47,23 @@ public interface ContinuousFeatureSplitter {
 		 * @return
 		 */
 		public static ContinuousFeatureSplitter getClusterSplitter(){
+			return getFeatureSplitter(ContinuousFeatureQuantisers.getClusteredQuantiser());
+		}
+		
+		public static ContinuousFeatureSplitter getConstantBucketFeatureSplitter(int numBuckets){
+			return getFeatureSplitter(ContinuousFeatureQuantisers.getConstantBucketQuantiser(numBuckets));
+		}
+		
+		public static ContinuousFeatureSplitter getFeatureSplitter(final ContinuousFeatureQuantiser quantiser){
 			return new ContinuousFeatureSplitter(){
 
 				@Override
 				public <T extends Number & Comparable<T>> Iterable<Split> splitInstances(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<T>> featureType) {
 					
-					return getSplits(instances, featureType, ContinuousFeatureQuantisers.getClusteredQuantiser());
+					return getSplits(instances, featureType, quantiser);
 				}
-				
 			};
+				
 		}
 	}
 }

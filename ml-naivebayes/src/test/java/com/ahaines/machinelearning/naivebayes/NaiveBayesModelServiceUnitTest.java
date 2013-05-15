@@ -34,7 +34,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 public class NaiveBayesModelServiceUnitTest {
 
-	private NaiveBayesModelService<EmailClassification> candidate;
+	private NaiveBayesModelService candidate;
 
 	private static final Logger LOG = LoggerFactory.getLogger(NaiveBayesModelServiceUnitTest.class);
 	
@@ -50,7 +50,7 @@ public class NaiveBayesModelServiceUnitTest {
 	
 	@Before
 	public void before(){
-		candidate = new NaiveBayesModelService<EmailClassification>(ContinuousFeatureQuantisers.getConstantBucketQuantiser(4));
+		candidate = new NaiveBayesModelService(ContinuousFeatureQuantisers.getConstantBucketQuantiser(4));
 	}
 	
 	private static Dataset<FeatureSet> loadContinuousTestSet() {
@@ -166,7 +166,7 @@ public class NaiveBayesModelServiceUnitTest {
 	@Test
 	public void givenDiscreteCandidate_whenTraining2Instances_thenCorrectProbabilitiesCalculated(){
 		LOG.debug("training with discrete dataset");
-		NaiveBayesModel<EmailClassification> model = candidate.trainModel(TEST_DISCRETE_TRAINING_SET);
+		NaiveBayesModel model = candidate.trainModel(TEST_DISCRETE_TRAINING_SET);
 		
 		ClassifiedProbabilityDataSet classifiedDataset = candidate.classifyDataset(DISCRETE_TEST_SET, model);
 		
@@ -195,7 +195,7 @@ public class NaiveBayesModelServiceUnitTest {
 	@Test
 	public void givenContinuousCandidate_whenTraining2Instances_thenCorrectProbabilitiesCalculated(){
 		LOG.debug("training with continuous dataset");
-		NaiveBayesModel<EmailClassification> model = candidate.trainModel(TEST_CONTINUOUS_TRAINING_SET);
+		NaiveBayesModel model = candidate.trainModel(TEST_CONTINUOUS_TRAINING_SET);
 		
 		ClassifiedProbabilityDataSet classifiedDataset = candidate.classifyDataset(CONTINUOUS_TEST_SET, model);
 		

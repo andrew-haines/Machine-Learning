@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.ahaines.machinelearning.api.ModelService;
 import com.ahaines.machinelearning.api.dataset.Classification;
 import com.ahaines.machinelearning.api.dataset.ClassifiedDataset;
@@ -58,6 +61,7 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 	private final ContinuousFeatureSplitter continousFeatureSplitter;
 	private final double homogeniousThreshold;
 	private final MissingFeatureClassifier missingFeatureClassifier;
+	private final Logger LOG = LoggerFactory.getLogger(DecisionTreeModelService.class);
 	
 	public DecisionTreeModelService(ImpurityProcessor impurityProcessor, ContinuousFeatureSplitter continousFeatureSplitter, double homogeniousThreshold, MissingFeatureClassifier missingFeatureClassifier){
 		this.impurityProcessor = impurityProcessor;
@@ -76,6 +80,9 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 		Id3Node root = growTree(trainingData.getInstances(), trainingData.getFeatureTypes(), new FeatureDefinition(Features.ROOT, Features.class));
 		Id3Model newModel = new Id3Model(root);
 		
+		if (LOG.isDebugEnabled()){
+			LOG.debug("model trained against "+Iterables.size(trainingData.getInstances()));
+		}
 		return newModel;
 	}
 	
@@ -111,6 +118,7 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 			}
 		}
 		
+		
 		return parentNode;
 	}
 	
@@ -132,50 +140,58 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 	 * Looks at the proportions of all classifications and takes the biggest proportion
 	 */
 	private HomogeniousRating getHomogeniousRating(Iterable<ClassifiedFeatureSet> instances){
-		
-		Map<Enum<?>, Double> proportions = ImpurityProcessors.getProportions(instances);
-		
-		Double totalClassifications = 0D;
-		double maximumClassificationProportion = 0;
-		Enum<?> currentBestClassification = null;
-		for (Entry<Enum<?>, Double> classificationProportion: proportions.entrySet()){
-			totalClassifications += classificationProportion.getValue();
-			if (maximumClassificationProportion < classificationProportion.getValue()){
-				maximumClassificationProportion = classificationProportion.getValue();
-				currentBestClassification = classificationProportion.getKey();
+		try{
+			Map<Enum<?>, Double> proportions = ImpurityProcessors.getProportions(instances);
+			
+			Double totalClassifications = 0D;
+			double maximumClassificationProportion = 0;
+			Enum<?> currentBestClassification = null;
+			for (Entry<Enum<?>, Double> classificationProportion: proportions.entrySet()){
+				totalClassifications += classificationProportion.getValue();
+				if (maximumClassificationProportion < classificationProportion.getValue()){
+					maximumClassificationProportion = classificationProportion.getValue();
+					currentBestClassification = classificationProportion.getKey();
+				}
 			}
+			return new HomogeniousRating(maximumClassificationProportion, currentBestClassification);
+		} catch (Error e){
+			System.out.println("hom found error");
+			throw e;
 		}
-		
-		return new HomogeniousRating(maximumClassificationProportion, currentBestClassification);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })	
 	private FeatureSplits getBestSplit(Iterable<ClassifiedFeatureSet> instances, Iterable<Class<? extends Feature<?>>> featureTypes) {
-		double minImpurity = Double.MAX_VALUE;
-		Iterable<Split> bestSplits = null;
-		Class<? extends Feature<?>> bestFeatureType = null;
-		for (Class<? extends Feature<?>> featureType: featureTypes){
-			// split instances based on feature properties.
-			
-			Iterable<Split> splits;
-			if (DiscreteFeature.class.isAssignableFrom(featureType)){
-				splits = splitDiscreteFeature(instances, (Class<? extends DiscreteFeature<?>>) featureType);
-			} else if (ContinuousFeature.class.isAssignableFrom(featureType)){
-				splits = splitContinuousFeature(instances, (Class)featureType);
-			} else{
-				throw new IllegalArgumentException("unknown type of feature");
+		try{
+			double minImpurity = Double.MAX_VALUE;
+			Iterable<Split> bestSplits = null;
+			Class<? extends Feature<?>> bestFeatureType = null;
+			for (Class<? extends Feature<?>> featureType: featureTypes){
+				// split instances based on feature properties.
+				
+				Iterable<Split> splits;
+				if (DiscreteFeature.class.isAssignableFrom(featureType)){
+					splits = splitDiscreteFeature(instances, (Class<? extends DiscreteFeature<?>>) featureType);
+				} else if (ContinuousFeature.class.isAssignableFrom(featureType)){
+					splits = splitContinuousFeature(instances, (Class)featureType);
+				} else{
+					throw new IllegalArgumentException("unknown type of feature");
+				}
+				
+				// now work out the impurity of this split and check if it is less then the current minimum
+				
+				double currentSplitImpurity = getImpurityOfSplit(splits, sizeOf(splits));
+				if (currentSplitImpurity < minImpurity){
+					minImpurity = currentSplitImpurity;
+					bestSplits = splits;
+					bestFeatureType = featureType;
+				}
 			}
-			
-			// now work out the impurity of this split and check if it is less then the current minimum
-			
-			double currentSplitImpurity = getImpurityOfSplit(splits, sizeOf(splits));
-			if (currentSplitImpurity < minImpurity){
-				minImpurity = currentSplitImpurity;
-				bestSplits = splits;
-				bestFeatureType = featureType;
-			}
+			return new FeatureSplits(bestFeatureType, bestSplits);
+		} catch (Error e){
+			System.out.println("found error best split");
+			throw e;
 		}
-		return new FeatureSplits(bestFeatureType, bestSplits);
 	}
 	
 	private Iterable<Split> splitDiscreteFeature(Iterable<ClassifiedFeatureSet> instances, Class<? extends DiscreteFeature<?>> featureType) {
@@ -184,9 +200,13 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 		Collection<? extends Feature<?>> featureValues = Lists.newArrayList(discreteType.getEnumConstants());
 		
 		Collection<Split> allSplits = new ArrayList<Split>(featureValues.size());
-		for (Feature<?> featureValue: featureValues){
-			Collection<ClassifiedFeatureSet> featureSplit = Utils.toCollection(ClassifiedDataset.filterFeatureSet(instances, new FeatureDefinition(featureValue, featureType)));
-			allSplits.add(new Split(new FeatureDefinition(featureValue, featureType), featureSplit));
+		try{
+			for (Feature<?> featureValue: featureValues){
+				Collection<ClassifiedFeatureSet> featureSplit = Utils.toCollection(ClassifiedDataset.filterFeatureSet(instances, new FeatureDefinition(featureValue, featureType)));
+				allSplits.add(new Split(new FeatureDefinition(featureValue, featureType), featureSplit));
+			}
+		} catch (Error e){
+			System.out.println("d found error");
 		}
 		
 		return allSplits;
@@ -195,7 +215,12 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 
 	private <T extends Number & Comparable<T>> Iterable<Split> splitContinuousFeature(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<T>> featureType) {
 		
-		return continousFeatureSplitter.splitInstances(instances, featureType);
+		try{
+			return continousFeatureSplitter.splitInstances(instances, featureType);
+		} catch (Error e){
+			System.out.println("c found error");
+			throw e;
+		}
 	}
 
 	private int sizeOf(Iterable<Split> splits) {

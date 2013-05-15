@@ -46,6 +46,13 @@ public class Id3Model implements Model{
 			builder.append(super.toCsv());
 			return builder;
 		}
+		@Override
+		public String toString() {
+			String superString = super.toString();
+			
+			return "\t\tmodelSize: " +modelSize+"\n"+superString;
+		}
+		
 		
 	}
 }

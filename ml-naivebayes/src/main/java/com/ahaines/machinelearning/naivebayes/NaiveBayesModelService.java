@@ -15,7 +15,7 @@ import com.ahaines.machinelearning.naivebayes.NaiveBayesModel.NaiveBayesModelFac
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 
-public class NaiveBayesModelService<T extends Enum<T>> implements ModelService<NaiveBayesModel<T>>{
+public class NaiveBayesModelService implements ModelService<NaiveBayesModel>{
 
 	private final ContinuousFeatureQuantiser quantiser;
 	
@@ -23,8 +23,8 @@ public class NaiveBayesModelService<T extends Enum<T>> implements ModelService<N
 		this.quantiser = quantiser;
 	}
 	@Override
-	public NaiveBayesModel<T> trainModel(ClassifiedDataset trainingData) {
-		NaiveBayesModelFactory<T> modelFactory = new NaiveBayesModelFactory<T>(quantiser);
+	public NaiveBayesModel trainModel(ClassifiedDataset trainingData) {
+		NaiveBayesModelFactory modelFactory = new NaiveBayesModelFactory(quantiser);
 		
 		for (ClassifiedFeatureSet instance: trainingData.getInstances()){
 			modelFactory.addInstance(instance);
@@ -34,11 +34,11 @@ public class NaiveBayesModelService<T extends Enum<T>> implements ModelService<N
 	}
 
 	@Override
-	public ClassifiedProbabilityDataSet classifyDataset(Dataset<? extends FeatureSet> dataset, final NaiveBayesModel<T> model) {
+	public ClassifiedProbabilityDataSet classifyDataset(Dataset<? extends FeatureSet> dataset, final NaiveBayesModel model) {
 		
-		Iterable<ClassificationProbability<T>> classifications = Iterables.transform(dataset.getInstances(), new Function<FeatureSet, ClassificationProbability<T>>(){
+		Iterable<ClassificationProbability<?>> classifications = Iterables.transform(dataset.getInstances(), new Function<FeatureSet, ClassificationProbability<?>>(){
 			
-			public ClassificationProbability<T> apply(FeatureSet instance){
+			public ClassificationProbability<?> apply(FeatureSet instance){
 				return model.getClassification(instance);
 			}
 		});
