@@ -209,7 +209,7 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 					
 					@Override
 					public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> range, Iterable<ClassifiedFeatureSet> instancesInSplit) {
-						LOG.debug("range determined as: "+range);
+						LOG.debug(featureType.getSimpleName()+" range determined as: "+range);
 						for (ClassifiedFeatureSet instance: instancesInSplit){
 							CLASSIFICATION instanceClass = getClassOfInstance(instance);
 							
@@ -358,11 +358,18 @@ public class NaiveBayesModel<CLASSIFICATION extends Enum<CLASSIFICATION>> implem
 		private final Map<? extends Feature<?>, Double> valueProbabilities;
 		
 		private DiscreteProbability(Map<? extends Feature<?>, Double> valueProbabilities){
+			if (valueProbabilities == null){
+				throw new NullPointerException();
+			}
 			this.valueProbabilities = valueProbabilities;
 		}
 		@Override
 		public double getProbability(Feature<?> feature) {
-			return valueProbabilities.get(feature);
+			Double probability = valueProbabilities.get(feature);
+			if (probability == null){
+				return DEFAULT_NEGLIGABLE_PROBABILITY;
+			}
+			return probability;
 		}
 	}
 	

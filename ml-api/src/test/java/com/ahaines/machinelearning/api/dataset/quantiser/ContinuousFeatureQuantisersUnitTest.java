@@ -28,6 +28,9 @@ public class ContinuousFeatureQuantisersUnitTest {
 
 	private static final FeatureSet.FeatureSetFactory FACTORY = new FeatureSet.FeatureSetFactory(Features.ALL_FEATURE_TYPES);
 	private final static Iterable<ClassifiedFeatureSet> TEST_INSTANCES = getTestInstances();
+	private final static Iterable<ClassifiedFeatureSet> TEST_INSTANCES_DUPLICATES = getTestContinuousDuplicateInstances();
+	private final static Iterable<ClassifiedFeatureSet> TEST_INSTANCES_ALL_SAME = getTestSameDuplicateInstances();
+	
 	private ContinuousFeatureQuantiser averageQuantiserCandidate;
 	private ContinuousFeatureQuantiser clusterQuantiserCandidate;
 	private ContinuousFeatureQuantiser constantBucketCandidate;
@@ -94,6 +97,43 @@ public class ContinuousFeatureQuantisersUnitTest {
 		instances.add(createClassifiedInstance(14, Contains.PRESENT, Contains.PRESENT, 65, EmailClassification.SPAM));
 		
 		//av = 64.714
+
+		return instances;
+	}
+	
+	private static Iterable<ClassifiedFeatureSet> getTestContinuousDuplicateInstances() {
+		List<ClassifiedFeatureSet> instances = new ArrayList<ClassifiedFeatureSet>();
+		instances.add(createClassifiedInstance(1, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.HAM));
+		instances.add(createClassifiedInstance(2, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.SPAM));
+		instances.add(createClassifiedInstance(3, Contains.PRESENT, Contains.ABSENT, 50, EmailClassification.HAM));
+		instances.add(createClassifiedInstance(4, Contains.ABSENT, Contains.ABSENT, 100, EmailClassification.SPAM));
+		instances.add(createClassifiedInstance(5, Contains.PRESENT, Contains.PRESENT, 100, EmailClassification.SPAM));
+		instances.add(createClassifiedInstance(6, Contains.ABSENT, Contains.ABSENT, 50, EmailClassification.HAM));
+		instances.add(createClassifiedInstance(7, Contains.PRESENT, Contains.ABSENT, 50, EmailClassification.SPAM));
+		instances.add(createClassifiedInstance(16, Contains.PRESENT, Contains.PRESENT, 91, EmailClassification.SPAM));
+		instances.add(createClassifiedInstance(17, Contains.PRESENT, Contains.PRESENT, 91, EmailClassification.SPAM));
+		instances.add(createClassifiedInstance(18, Contains.PRESENT, Contains.PRESENT, 92, EmailClassification.SPAM));
+		instances.add(createClassifiedInstance(8, Contains.ABSENT, Contains.ABSENT, 50, EmailClassification.HAM));
+		instances.add(createClassifiedInstance(9, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.HAM));
+		instances.add(createClassifiedInstance(10, Contains.PRESENT, Contains.PRESENT, 100, EmailClassification.SPAM));
+		instances.add(createClassifiedInstance(11, Contains.ABSENT, Contains.ABSENT, 30, EmailClassification.HAM));
+		instances.add(createClassifiedInstance(12, Contains.PRESENT, Contains.ABSENT, 30, EmailClassification.HAM));
+		instances.add(createClassifiedInstance(13, Contains.PRESENT, Contains.PRESENT, 30, EmailClassification.SPAM));
+		instances.add(createClassifiedInstance(14, Contains.PRESENT, Contains.PRESENT, 20, EmailClassification.SPAM));
+		instances.add(createClassifiedInstance(15, Contains.PRESENT, Contains.PRESENT, 20, EmailClassification.SPAM));
+		
+		return instances;
+	}
+	
+	private static Iterable<ClassifiedFeatureSet> getTestSameDuplicateInstances() {
+		List<ClassifiedFeatureSet> instances = new ArrayList<ClassifiedFeatureSet>();
+		instances.add(createClassifiedInstance(1, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.HAM));
+		instances.add(createClassifiedInstance(2, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.HAM));
+		instances.add(createClassifiedInstance(3, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.HAM));
+		instances.add(createClassifiedInstance(4, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.HAM));
+		instances.add(createClassifiedInstance(5, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.SPAM));
+		instances.add(createClassifiedInstance(6, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.HAM));
+		instances.add(createClassifiedInstance(7, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.HAM));
 
 		return instances;
 	}
@@ -322,6 +362,102 @@ public class ContinuousFeatureQuantisersUnitTest {
 		assertThat(((RangeFeature<Integer>)ranges.get(2)).intersects(new Features.HoursIgnoredFeature(Integer.MAX_VALUE)), is(equalTo(true)));
 		assertThat(Iterables.size(instances.get(2)), is(equalTo(1)));
 		assertThat(Iterables.get(instances.get(2), 0).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(5))));
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void givenConstantBucketQuantiser_whenCallingQuantiseWith10BucketsAndDuplicateValuesInTestSet_thenExpectedCallbacksInvokedSplitOccurs(){
+		final List<RangeFeature<? extends Number>> ranges = new ArrayList<RangeFeature<? extends Number>>();
+		final List<Iterable<ClassifiedFeatureSet>> instances = new ArrayList<Iterable<ClassifiedFeatureSet>>();
+		
+		constantBucketCandidate.quantise(TEST_INSTANCES_DUPLICATES, Email.Features.HoursIgnoredFeature.class, new QuantiserEventProcessor(){
+
+			@Override
+			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<ClassifiedFeatureSet> instanceInSplit) {
+				ranges.add(newRange);
+				System.out.println(newRange);
+				instances.add(instanceInSplit);
+			}
+		});
+		
+		assertThat(ranges.size(), is(equalTo(10)));
+		
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(Integer.MIN_VALUE)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(-45)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(0)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(20)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(21)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(25)), is(equalTo(false)));
+		assertThat(Iterables.size(instances.get(0)), is(equalTo(2)));
+		assertThat(Iterables.get(instances.get(0), 0).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(14))));
+		assertThat(Iterables.get(instances.get(0), 1).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(15))));
+		
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(20)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(21)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(26)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(29)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(30)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(33)), is(equalTo(false)));
+		assertThat(Iterables.size(instances.get(1)), is(equalTo(0)));
+		
+		assertThat(((RangeFeature<Integer>)ranges.get(8)).intersects(new Features.HoursIgnoredFeature(85)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(8)).intersects(new Features.HoursIgnoredFeature(89)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(8)).intersects(new Features.HoursIgnoredFeature(90)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(8)).intersects(new Features.HoursIgnoredFeature(95)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(8)).intersects(new Features.HoursIgnoredFeature(99)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(8)).intersects(new Features.HoursIgnoredFeature(100)), is(equalTo(false)));
+		assertThat(Iterables.size(instances.get(8)), is(equalTo(3)));
+		assertThat(Iterables.get(instances.get(8), 0).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(16))));
+		assertThat(Iterables.get(instances.get(8), 1).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(17))));
+		assertThat(Iterables.get(instances.get(8), 2).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(18))));
+		
+		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(98)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(99)), is(equalTo(false)));
+		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(100)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(101)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(254)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(9)).intersects(new Features.HoursIgnoredFeature(887)), is(equalTo(true)));
+		assertThat(Iterables.size(instances.get(9)), is(equalTo(6)));
+		assertThat(Iterables.get(instances.get(9), 0).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(10))));
+		assertThat(Iterables.get(instances.get(9), 1).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(9))));
+		assertThat(Iterables.get(instances.get(9), 2).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(5))));
+		assertThat(Iterables.get(instances.get(9), 3).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(4))));
+		assertThat(Iterables.get(instances.get(9), 4).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(2))));
+		assertThat(Iterables.get(instances.get(9), 5).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(1))));
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void givenConstantBucketQuantiser_whenCallingQuantiseWith10BucketsAndAllSameValuesInTestSet_thenExpectedCallbacksInvokedSplitOccurs(){
+		final List<RangeFeature<? extends Number>> ranges = new ArrayList<RangeFeature<? extends Number>>();
+		final List<Iterable<ClassifiedFeatureSet>> instances = new ArrayList<Iterable<ClassifiedFeatureSet>>();
+		
+		constantBucketCandidate.quantise(TEST_INSTANCES_ALL_SAME, Email.Features.HoursIgnoredFeature.class, new QuantiserEventProcessor(){
+
+			@Override
+			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<ClassifiedFeatureSet> instanceInSplit) {
+				ranges.add(newRange);
+				System.out.println(newRange);
+				instances.add(instanceInSplit);
+			}
+		});
+		
+		assertThat(ranges.size(), is(equalTo(1))); // as there is nothing to split, we can only return a complete range of all numbers
+		
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(Integer.MIN_VALUE)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(-45)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(0)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(48)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(100)), is(equalTo(true)));
+		assertThat(((RangeFeature<Integer>)ranges.get(0)).intersects(new Features.HoursIgnoredFeature(Integer.MAX_VALUE)), is(equalTo(true)));
+		assertThat(Iterables.size(instances.get(0)), is(equalTo(7)));
+		assertThat(Iterables.get(instances.get(0), 0).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(1))));
+		assertThat(Iterables.get(instances.get(0), 1).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(2))));
+		assertThat(Iterables.get(instances.get(0), 2).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(3))));
+		assertThat(Iterables.get(instances.get(0), 3).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(4))));
+		assertThat(Iterables.get(instances.get(0), 4).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(5))));
+		assertThat(Iterables.get(instances.get(0), 5).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(6))));
+		assertThat(Iterables.get(instances.get(0), 6).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(7))));
 	}
 	
 	private static ClassifiedFeatureSet createClassifiedInstance(int id, Contains viagra, Contains enlargment, int hoursIgnored, EmailClassification classification){

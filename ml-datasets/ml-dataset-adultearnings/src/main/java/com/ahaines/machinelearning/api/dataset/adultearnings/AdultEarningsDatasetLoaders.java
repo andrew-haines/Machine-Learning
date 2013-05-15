@@ -1,7 +1,6 @@
 package com.ahaines.machinelearning.api.dataset.adultearnings;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;

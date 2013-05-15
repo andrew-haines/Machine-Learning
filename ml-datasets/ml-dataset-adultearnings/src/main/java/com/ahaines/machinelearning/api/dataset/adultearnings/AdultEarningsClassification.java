@@ -18,8 +18,3 @@ public class AdultEarningsClassification extends Classification<AdultEarningsCla
 	}
 }
 
-enum AdultEarningsClassificationType {
-
-	GREATER_THEN_50K,
-	LESS_THEN_50K
-}

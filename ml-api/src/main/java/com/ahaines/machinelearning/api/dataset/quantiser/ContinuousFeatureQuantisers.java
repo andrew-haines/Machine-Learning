@@ -1,7 +1,6 @@
 package com.ahaines.machinelearning.api.dataset.quantiser;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -150,9 +149,17 @@ public class ContinuousFeatureQuantisers {
 				minValue = converter.castToType(minValue.doubleValue() + 1);
 				T maxValue = sortedList.get(sortedList.size()-1).getFeature(featureQuantiserType).getValue();
 				
+				if (minValue.compareTo(maxValue) >= 0){
+					// there is no range to split as min > max. Just create a single range feature for the entire natural value of numbers
+					
+					processor.newRangeDetermined(new RangeFeature<T>(converter.getMinPossibleValue(), converter.getMaxPossibleValue(), true), sortedList);
+					
+					return;
+				}
+				
 				RangeFeature<T> lowerBound = new RangeFeature<T>(converter.getMinPossibleValue(), minValue);
 				
-				processor.newRangeDetermined(lowerBound, Arrays.asList(sortedList.get(0)));
+				processor.newRangeDetermined(lowerBound, new SingleValueIteratorFromSortedList<T>(minValue, sortedList, featureQuantiserType, true));
 				
 				// inbetween bands
 				
@@ -163,10 +170,12 @@ public class ContinuousFeatureQuantisers {
 				}
 				
 				double range = (maxValue.doubleValue() - minValue.doubleValue()) / numRangeBuckets;
+				
 				final AtomicInteger latestInstanceIndex = new AtomicInteger(1);
 				for (int i = 0; i < numRangeBuckets; i++){
 					double lowerBoundRange = range * i + minValue.doubleValue();
 					final double upperBoundRange = lowerBoundRange + range;
+					
 					
 					final T typedLowerBound = converter.castToType(lowerBoundRange);
 					final T typedUpperBound = converter.castToType(upperBoundRange);
@@ -216,7 +225,7 @@ public class ContinuousFeatureQuantisers {
 				
 				RangeFeature<T> upperBound = new RangeFeature<T>(maxValue, converter.getMaxPossibleValue(), true);
 				
-				processor.newRangeDetermined(upperBound, Arrays.asList(sortedList.get(sortedList.size()-1)));
+				processor.newRangeDetermined(upperBound, new SingleValueIteratorFromSortedList<T>(maxValue, sortedList, featureQuantiserType, false));
 				
 			}
 			
@@ -237,5 +246,75 @@ public class ContinuousFeatureQuantisers {
 		});
 		
 		return sortedList;
+	}
+	
+	private static class SingleValueIteratorFromSortedList<T extends Number & Comparable<T>> implements Iterable<ClassifiedFeatureSet>{
+
+		private final T value;
+		private final Iterable<ClassifiedFeatureSet> items;
+		private final Class<? extends ContinuousFeature<T>> featureType;
+		private final boolean greaterThan;
+		
+		private SingleValueIteratorFromSortedList(T value, List<ClassifiedFeatureSet> items, Class<? extends ContinuousFeature<T>> featureType, boolean greaterThan){
+			this.value = value;
+			if(greaterThan){
+				this.items = items;
+			} else{
+				this.items = Lists.reverse(items);
+			}
+			this.featureType = featureType;
+			this.greaterThan = greaterThan;
+		}
+		@Override
+		public Iterator<ClassifiedFeatureSet> iterator() {
+			
+			final Iterator<ClassifiedFeatureSet> masterIt = items.iterator();
+			return new Iterator<ClassifiedFeatureSet>(){
+
+				boolean hasFinished = false;
+				ClassifiedFeatureSet nextValue;
+				@Override
+				public boolean hasNext() {
+					
+					if (!masterIt.hasNext() || hasFinished){
+						return false;
+					}
+					if (nextValue == null){
+						nextValue = masterIt.next();
+					}
+					
+					if (greaterThan){
+						if (nextValue.getFeature(featureType).getValue().compareTo(value) > 0){
+							hasFinished = true;
+						}
+					} else {
+						if (nextValue.getFeature(featureType).getValue().compareTo(value) < 0){
+							hasFinished = true;
+						}
+					}
+					
+					return !hasFinished;
+				}
+
+				@Override
+				public ClassifiedFeatureSet next() {
+					if (nextValue == null){
+						nextValue = masterIt.next();
+					}
+					try{
+						return nextValue;
+					} finally{
+						nextValue = null;
+					}
+				}
+
+				@Override
+				public void remove() {
+					throw new UnsupportedOperationException();
+				}
+				
+			};
+		}
+		
 	}
 }
