@@ -190,7 +190,7 @@ public class MainRunner {
 		Metrics metrics = performRun(trainingLoader, testLoader, service);
 		StringBuilder builder = new StringBuilder();
 		
-		builder.append(metrics.toCsv());
+		builder.append(metrics.toString());
 		builder.append("\n");
 		
 		LOG.info(builder.toString());

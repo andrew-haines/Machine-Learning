@@ -87,12 +87,17 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 	}
 	
 	public boolean isHomogenious(HomogeniousRating rating) {
-		return rating.maximumClassificationSplit > homogeniousThreshold;
+		return rating.maximumClassificationSplit >= homogeniousThreshold;
 	}
 	
 	private Id3Node growTree(Iterable<ClassifiedFeatureSet> instances, Iterable<Class<? extends Feature<?>>> featureTypes, FeatureDefinition featureDef){
 		HomogeniousRating homogenious = getHomogeniousRating(instances);
 		if (isHomogenious(homogenious) || Iterables.isEmpty(featureTypes)){
+			if (isHomogenious(homogenious)){
+				LOG.debug("Prunning");
+			} else{
+				LOG.debug("no more feature to split on");
+			}
 			return new Id3Node(homogenious.mostHomogeniousClassification, featureDef);
 		}
 		
