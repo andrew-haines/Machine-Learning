@@ -61,5 +61,9 @@ public interface Model {
 				builder.append(",");
 			}
 		}
+		
+		public double getAccuracy(){
+			return accuracy;
+		}
 	}
 }

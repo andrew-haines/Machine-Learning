@@ -30,6 +30,9 @@ public interface ImpurityProcessor {
 				@Override
 				public double getImpurity(Iterable<ClassifiedFeatureSet> instances) {
 					Map<Enum<?>, Double> proportions = getProportions(instances);
+					if (proportions.size() <= 1){ // if its got 0 instances then it is pure, and if it only has one enum classification for all the instances then it is also completely pure 
+						return 0;
+					}
 					double impurity = 1;
 					for (Entry<Enum<?>,Double> proportion: proportions.entrySet()){
 						impurity *= proportion.getValue();
@@ -65,6 +68,9 @@ public interface ImpurityProcessor {
 				@Override
 				public double getImpurity(Iterable<ClassifiedFeatureSet> instances) {
 					Map<Enum<?>, Double> proportions = getProportions(instances);
+					if (proportions.size() <= 1){
+						return 0;
+					}
 					double minPropertion = Double.MAX_VALUE;
 					
 					for (Double proportion: proportions.values()){

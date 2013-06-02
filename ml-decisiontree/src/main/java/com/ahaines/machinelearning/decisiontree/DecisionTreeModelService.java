@@ -21,6 +21,8 @@ import com.ahaines.machinelearning.api.dataset.Feature.Features;
 import com.ahaines.machinelearning.api.dataset.FeatureDefinition;
 import com.ahaines.machinelearning.api.dataset.FeatureSet;
 import com.ahaines.machinelearning.api.dataset.Identifier;
+import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantiser;
+import com.ahaines.machinelearning.decisiontree.ContinuousFeatureSplitter.ContinuousFeatureSplitters;
 import com.ahaines.machinelearning.decisiontree.Id3Node.DecisionId3Node;
 import com.ahaines.machinelearning.decisiontree.ImpurityProcessor.ImpurityProcessors;
 import com.ahaines.machinelearning.decisiontree.MissingFeatureClassifier.MissingFeatureClassifiers;
@@ -63,15 +65,15 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 	private final MissingFeatureClassifier missingFeatureClassifier;
 	private final Logger LOG = LoggerFactory.getLogger(DecisionTreeModelService.class);
 	
-	public DecisionTreeModelService(ImpurityProcessor impurityProcessor, ContinuousFeatureSplitter continousFeatureSplitter, double homogeniousThreshold, MissingFeatureClassifier missingFeatureClassifier){
+	public DecisionTreeModelService(ImpurityProcessor impurityProcessor, ContinuousFeatureQuantiser continuousFeatureQuantiser, double homogeniousThreshold, MissingFeatureClassifier missingFeatureClassifier){
 		this.impurityProcessor = impurityProcessor;
-		this.continousFeatureSplitter = continousFeatureSplitter;
 		this.homogeniousThreshold = homogeniousThreshold;
 		this.missingFeatureClassifier = missingFeatureClassifier;
+		this.continousFeatureSplitter = ContinuousFeatureSplitters.getFeatureSplitter(continuousFeatureQuantiser);
 	}
 	
-	public DecisionTreeModelService(ImpurityProcessor impurityProcessor, ContinuousFeatureSplitter continousFeatureSplitter){
-		this(impurityProcessor, continousFeatureSplitter, DEFAULT_HOMOGENIOUS_THRESHOLD, MissingFeatureClassifier.CLASSIFIERS.getHomogeniousMissingFeatureClassifier());
+	public DecisionTreeModelService(ImpurityProcessor impurityProcessor, ContinuousFeatureQuantiser continuousFeatureQuantiser){
+		this(impurityProcessor, continuousFeatureQuantiser, DEFAULT_HOMOGENIOUS_THRESHOLD, MissingFeatureClassifier.CLASSIFIERS.getHomogeniousMissingFeatureClassifier());
 	}
 	
 	@Override
@@ -85,7 +87,7 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 		}
 		return newModel;
 	}
-	
+
 	public boolean isHomogenious(HomogeniousRating rating) {
 		return rating.maximumClassificationSplit >= homogeniousThreshold;
 	}
@@ -196,18 +198,40 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 
 		Collection<? extends Feature<?>> featureValues = Lists.newArrayList(discreteType.getEnumConstants());
 		
-		Collection<Split> allSplits = new ArrayList<Split>(featureValues.size());
-		for (Feature<?> featureValue: featureValues){
-			Collection<ClassifiedFeatureSet> featureSplit = Utils.toCollection(ClassifiedDataset.filterFeatureSet(instances, new FeatureDefinition(featureValue, featureType)));
-			allSplits.add(new Split(new FeatureDefinition(featureValue, featureType), featureSplit));
+		return splitDiscreteFeature(instances, featureType, featureValues);
+	}
+	
+	protected Iterable<Split> splitDiscreteFeature(Iterable<ClassifiedFeatureSet> instances, Class<? extends Feature<?>> featureType, Collection<? extends Feature<?>> allPossibleDiscreteValues){
+		Collection<Split> allSplits = new ArrayList<Split>(allPossibleDiscreteValues.size());
+		
+		Map<Feature<?>, Collection<ClassifiedFeatureSet>> splits = new HashMap<Feature<?>, Collection<ClassifiedFeatureSet>>();
+		
+		for (Feature<?> feature: allPossibleDiscreteValues){
+			splits.put(feature, new ArrayList<ClassifiedFeatureSet>());
+		}
+		
+		for (ClassifiedFeatureSet instance: instances){
+			Feature<?> featureValue = instance.getFeature(featureType);
+			
+			if (featureValue == Features.MISSING){ // missing features should get added to all splits.
+				for (Collection<ClassifiedFeatureSet> splitInstances: splits.values()){
+					splitInstances.add(instance);
+				}
+				
+			} else {
+				splits.get(featureValue).add(instance);
+			}
+		}
+		
+		for (Entry<Feature<?>, Collection<ClassifiedFeatureSet>> featureEntry: splits.entrySet()){
+			allSplits.add(new Split(new FeatureDefinition(featureEntry.getKey(), featureType), featureEntry.getValue()));
 		}
 
 		
 		return allSplits;
-		
 	}
 
-	private <T extends Number & Comparable<T>> Iterable<Split> splitContinuousFeature(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<T>> featureType) {
+	protected <T extends Number & Comparable<T>> Iterable<Split> splitContinuousFeature(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<T>> featureType) {
 		
 		return continousFeatureSplitter.splitInstances(instances, featureType);
 
@@ -234,7 +258,7 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 			}
 		}
 		
-		return ClassifiedDataset.create(dataset, classifications);
+		return ClassifiedDataset.FACTORY.create(dataset, classifications);
 	}
 	
 	private static class HomogeniousRating{

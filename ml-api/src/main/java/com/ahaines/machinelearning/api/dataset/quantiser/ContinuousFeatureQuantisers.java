@@ -21,7 +21,10 @@ public class ContinuousFeatureQuantisers {
 		return new ContinuousFeatureQuantiser(){
 
 			@Override
-			public <T extends Number & Comparable<T>> void quantise(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<T>> featureQuantiserType, QuantiserEventProcessor processor) {
+			public <T extends Number & Comparable<T>> Collection<RangeFeature<T>> quantise(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<T>> featureQuantiserType, QuantiserEventProcessor processor) {
+				
+				final Collection<RangeFeature<T>> allFeatureRanges = new ArrayList<RangeFeature<T>>();
+				
 				// calculate average
 				
 				int count = 0;
@@ -43,7 +46,7 @@ public class ContinuousFeatureQuantisers {
 				
 				// now put all instances in buckets above and below the average
 				
-				RangeFeature<T> newFeature = new RangeFeature<T>(converter.getMinPossibleValue(), converter.castToType(average));
+				RangeFeature<T> newFeature = createRangeFeature(converter.getMinPossibleValue(), converter.castToType(average), allFeatureRanges);
 				
 				processor.newRangeDetermined(newFeature, Iterables.filter(instances, new Predicate<ClassifiedFeatureSet>() {
 					
@@ -53,7 +56,7 @@ public class ContinuousFeatureQuantisers {
 					
 				}));
 				
-				newFeature = new RangeFeature<T>(converter.castToType(average), converter.getMaxPossibleValue(), true);
+				newFeature = createRangeFeature(converter.castToType(average), converter.getMaxPossibleValue(), true, allFeatureRanges);
 				
 				processor.newRangeDetermined(newFeature, Iterables.filter(instances, new Predicate<ClassifiedFeatureSet>() {
 					
@@ -62,17 +65,35 @@ public class ContinuousFeatureQuantisers {
 					}
 					
 				}));
+				
+				return allFeatureRanges;
 			}
 			
 		};
+	}
+	
+	private static <T extends Number & Comparable<T>> RangeFeature<T> createRangeFeature(T lowerBound, T upperBound, Collection<RangeFeature<T>> allFeatureRanges){
+		RangeFeature<T> newRange = new RangeFeature<T>(lowerBound, upperBound);
+		allFeatureRanges.add(newRange);
+		
+		return newRange;
+	}
+	
+	private static <T extends Number & Comparable<T>> RangeFeature<T> createRangeFeature(T lowerBound, T upperBound, boolean inclusive, Collection<RangeFeature<T>> allFeatureRanges){
+		RangeFeature<T> newRange = new RangeFeature<T>(lowerBound, upperBound, inclusive);
+		allFeatureRanges.add(newRange);
+		
+		return newRange;
 	}
 	
 	public static ContinuousFeatureQuantiser getClusteredQuantiser(){
 		return new ContinuousFeatureQuantiser(){
 
 			@Override
-			public <T extends Number & Comparable<T>> void quantise(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<T>> featureQuantiserType, QuantiserEventProcessor processor) {
+			public <T extends Number & Comparable<T>> Collection<RangeFeature<T>> quantise(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<T>> featureQuantiserType, QuantiserEventProcessor processor) {
 				
+				final Collection<RangeFeature<T>> allFeatureRanges = new ArrayList<RangeFeature<T>>();
+
 				/*
 				 * This algorithm basically sorts the instance set by the feature and then runs through creating
 				 * RangeFeature's with lower, upper bounds as the classification of each instance changes
@@ -103,7 +124,7 @@ public class ContinuousFeatureQuantisers {
 						if (!lastRecord.equals(newRecord)){ // only split if the value has actually changed else we will split with this value twice
 							lastClassification = instance.getClassification().getValue();
 							
-							RangeFeature<T> newRange = new RangeFeature<T>(min, newRecord);
+							RangeFeature<T> newRange = createRangeFeature(min, newRecord, allFeatureRanges);
 							processor.newRangeDetermined(newRange, tempInstanceSplit);
 							tempInstanceSplit = new ArrayList<ClassifiedFeatureSet>();
 							min = newRecord;
@@ -114,7 +135,9 @@ public class ContinuousFeatureQuantisers {
 					tempInstanceSplit.add(instance);
 				}
 				
-				processor.newRangeDetermined(new RangeFeature<T>(min, converter.getMaxPossibleValue(), true), tempInstanceSplit);
+				processor.newRangeDetermined(createRangeFeature(min, converter.getMaxPossibleValue(), true, allFeatureRanges), tempInstanceSplit);
+				
+				return allFeatureRanges;
 			}
 			
 		};
@@ -141,25 +164,28 @@ public class ContinuousFeatureQuantisers {
 		return new ContinuousFeatureQuantiser(){
 
 			@Override
-			public <T extends Number & Comparable<T>> void quantise(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<T>> featureQuantiserType, QuantiserEventProcessor processor) {
+			public <T extends Number & Comparable<T>> Collection<RangeFeature<T>> quantise(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<T>> featureQuantiserType, QuantiserEventProcessor processor) {
 				final List<ClassifiedFeatureSet> sortedList = sortInstancesBasedOnFeature(instances, featureQuantiserType);
-				
+				final Collection<RangeFeature<T>> allFeatureRanges = new ArrayList<RangeFeature<T>>();
 				final NumberConverter<T> converter = sortedList.get(0).getFeature(featureQuantiserType).getNumberConverter();
+				
 				T minValue = sortedList.get(0).getFeature(featureQuantiserType).getValue();
 				minValue = converter.castToType(minValue.doubleValue() + 1);
 				T maxValue = sortedList.get(sortedList.size()-1).getFeature(featureQuantiserType).getValue();
 				
 				if (minValue.compareTo(maxValue) >= 0){
 					// there is no range to split as min > max. Just create a single range feature for the entire natural value of numbers
+					RangeFeature<T> range = createRangeFeature(converter.getMinPossibleValue(), converter.getMaxPossibleValue(), true, allFeatureRanges);
+					processor.newRangeDetermined(range, sortedList);
 					
-					processor.newRangeDetermined(new RangeFeature<T>(converter.getMinPossibleValue(), converter.getMaxPossibleValue(), true), sortedList);
-					
-					return;
+					return allFeatureRanges;
 				}
 				
-				RangeFeature<T> lowerBound = new RangeFeature<T>(converter.getMinPossibleValue(), minValue);
+				RangeFeature<T> lowerBound = createRangeFeature(converter.getMinPossibleValue(), minValue, allFeatureRanges);
 				
-				processor.newRangeDetermined(lowerBound, new SingleValueIteratorFromSortedList<T>(minValue, sortedList, featureQuantiserType, true));
+				SingleValueIteratorFromSortedList<T> it = new SingleValueIteratorFromSortedList<T>(minValue, sortedList, featureQuantiserType, true);
+				
+				processor.newRangeDetermined(lowerBound, it);
 				
 				// inbetween bands
 				
@@ -171,7 +197,7 @@ public class ContinuousFeatureQuantisers {
 				
 				double range = (maxValue.doubleValue() - minValue.doubleValue()) / numRangeBuckets;
 				
-				final AtomicInteger latestInstanceIndex = new AtomicInteger(1);
+				final AtomicInteger latestInstanceIndex = new AtomicInteger(it.getIteratorSize());
 				for (int i = 0; i < numRangeBuckets; i++){
 					double lowerBoundRange = range * i + minValue.doubleValue();
 					final double upperBoundRange = lowerBoundRange + range;
@@ -180,7 +206,7 @@ public class ContinuousFeatureQuantisers {
 					final T typedLowerBound = converter.castToType(lowerBoundRange);
 					final T typedUpperBound = converter.castToType(upperBoundRange);
 					
-					RangeFeature<T> newRange = new RangeFeature<T>(typedLowerBound, typedUpperBound);
+					RangeFeature<T> newRange = createRangeFeature(typedLowerBound, typedUpperBound, allFeatureRanges);
 					final int seekForwardAmount = latestInstanceIndex.get(); // optimisation because we dont want to re-iterate over instance that we have already added. Note that this only works if, the caller iterates.
 					processor.newRangeDetermined(newRange, new Iterable<ClassifiedFeatureSet>(){
 
@@ -223,10 +249,11 @@ public class ContinuousFeatureQuantisers {
 					});
 				}
 				
-				RangeFeature<T> upperBound = new RangeFeature<T>(maxValue, converter.getMaxPossibleValue(), true);
+				RangeFeature<T> upperBound = createRangeFeature(maxValue, converter.getMaxPossibleValue(), true, allFeatureRanges);
 				
 				processor.newRangeDetermined(upperBound, new SingleValueIteratorFromSortedList<T>(maxValue, sortedList, featureQuantiserType, false));
 				
+				return allFeatureRanges;
 			}
 			
 		};
@@ -250,10 +277,12 @@ public class ContinuousFeatureQuantisers {
 	
 	private static class SingleValueIteratorFromSortedList<T extends Number & Comparable<T>> implements Iterable<ClassifiedFeatureSet>{
 
+		private static final int NOT_INITALISED = -1;
 		private final T value;
 		private final Iterable<ClassifiedFeatureSet> items;
 		private final Class<? extends ContinuousFeature<T>> featureType;
 		private final boolean greaterThan;
+		private int iteratorSize = NOT_INITALISED;
 		
 		private SingleValueIteratorFromSortedList(T value, List<ClassifiedFeatureSet> items, Class<? extends ContinuousFeature<T>> featureType, boolean greaterThan){
 			this.value = value;
@@ -269,6 +298,7 @@ public class ContinuousFeatureQuantisers {
 		public Iterator<ClassifiedFeatureSet> iterator() {
 			
 			final Iterator<ClassifiedFeatureSet> masterIt = items.iterator();
+			iteratorSize = 0;
 			return new Iterator<ClassifiedFeatureSet>(){
 
 				boolean hasFinished = false;
@@ -305,6 +335,7 @@ public class ContinuousFeatureQuantisers {
 						return nextValue;
 					} finally{
 						nextValue = null;
+						iteratorSize++;
 					}
 				}
 
@@ -314,6 +345,12 @@ public class ContinuousFeatureQuantisers {
 				}
 				
 			};
+		}
+		public int getIteratorSize() {
+			if (iteratorSize == NOT_INITALISED){
+				for (ClassifiedFeatureSet value: this){}
+			}
+			return iteratorSize;
 		}
 		
 	}

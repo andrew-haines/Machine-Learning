@@ -39,7 +39,7 @@ public class ImpurityProcessorUnitTest {
 	public void givenPureSet_whenCallingGiniGetImpurity_thenCorrectValueReturned(){
 		double impurity = giniCandidate.getImpurity(getPureFeatureSet());
 		
-		assertThat(impurity, is(equalTo(2.0)));
+		assertThat(impurity, is(equalTo(0.0)));
 	}
 	
 	@Test
@@ -53,7 +53,7 @@ public class ImpurityProcessorUnitTest {
 	public void givenPureSet_whenCallingMinClassGetImpurity_thenCorrectValueReturned(){
 		double impurity = minorityClassCandidate.getImpurity(getPureFeatureSet());
 		
-		assertThat(impurity, is(equalTo(1.0)));
+		assertThat(impurity, is(equalTo(0.0)));
 	}
 	
 	@Test

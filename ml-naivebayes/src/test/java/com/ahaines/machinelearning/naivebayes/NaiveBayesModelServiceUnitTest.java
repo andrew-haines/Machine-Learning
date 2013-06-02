@@ -99,7 +99,7 @@ public class NaiveBayesModelServiceUnitTest {
 		builder.addInstance(createContinuousInstance(13, Contains.ABSENT, Contains.ABSENT, 77));
 		classifications.add(createClassification(13, EmailClassification.SPAM));
 		
-		return ClassifiedDataset.create(builder.build(), classifications);
+		return ClassifiedDataset.FACTORY.create(builder.build(), classifications);
 	}
 	
 	private static Classification<EmailClassification> createClassification(int id, EmailClassification classification){
@@ -148,7 +148,7 @@ public class NaiveBayesModelServiceUnitTest {
 			classifications.add(new Classification<EmailClassification>(Identifier.FACTORY.createIdentifier(i), classification));
 		}
 		
-		return ClassifiedDataset.create(builder.build(), classifications);
+		return ClassifiedDataset.FACTORY.create(builder.build(), classifications);
 	}
 
 	private static FeatureSet createDiscreteInstance(int id, Contains viagra, Contains enlargment) {

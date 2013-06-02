@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.ahaines.machinelearning.api.ModelService;
 import com.ahaines.machinelearning.api.dataset.ClassifiedDataset;
+import com.ahaines.machinelearning.api.dataset.ClassifiedDataset.ClassifiedDatasetImpl;
 import com.ahaines.machinelearning.api.dataset.ClassifiedFeatureSet;
 import com.ahaines.machinelearning.api.dataset.Dataset;
 import com.ahaines.machinelearning.api.dataset.FeatureSet;
@@ -46,7 +47,7 @@ public class NaiveBayesModelService implements ModelService<NaiveBayesModel>{
 		return new ClassifiedProbabilityDataSet(dataset, Identifiable.UTIL.index(classifications));
 	}
 
-	public static class ClassifiedProbabilityDataSet extends ClassifiedDataset{
+	public static class ClassifiedProbabilityDataSet extends ClassifiedDatasetImpl{
 
 		protected ClassifiedProbabilityDataSet(Dataset<? extends FeatureSet> dataset,
 				Map<Identifier, ? extends ClassificationProbability<? extends Enum<?>>> classifications) {

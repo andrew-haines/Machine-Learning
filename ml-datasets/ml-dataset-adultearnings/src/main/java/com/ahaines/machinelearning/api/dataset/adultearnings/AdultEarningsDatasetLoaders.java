@@ -151,7 +151,7 @@ public final class AdultEarningsDatasetLoaders{
 		
 		System.out.println("loaded: "+count+" instances");
 		
-		return ClassifiedDataset.create(dataset.build(), classifications);
+		return ClassifiedDataset.FACTORY.create(dataset.build(), classifications);
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })

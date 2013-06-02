@@ -10,11 +10,8 @@ import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
-import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.ConsoleAppender;
-import ch.qos.logback.core.OutputStreamAppender;
 
 import com.ahaines.machinelearning.api.Model;
 import com.ahaines.machinelearning.api.Model.Metrics;
@@ -25,14 +22,12 @@ import com.ahaines.machinelearning.api.dataset.adultearnings.AdultEarningsClassi
 import com.ahaines.machinelearning.api.dataset.adultearnings.AdultEarningsDatasetLoaders;
 import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantiser;
 import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantisers;
-import com.ahaines.machinelearning.decisiontree.ContinuousFeatureSplitter;
-import com.ahaines.machinelearning.decisiontree.Id3Model;
 import com.ahaines.machinelearning.decisiontree.DecisionTreeModelService;
+import com.ahaines.machinelearning.decisiontree.Id3Model;
 import com.ahaines.machinelearning.decisiontree.ImpurityProcessor;
 import com.ahaines.machinelearning.decisiontree.MissingFeatureClassifier;
-import com.ahaines.machinelearning.decisiontree.ContinuousFeatureSplitter.ContinuousFeatureSplitters;
 import com.ahaines.machinelearning.decisiontree.ImpurityProcessor.ImpurityProcessors;
-import com.ahaines.machinelearning.naivebayes.NaiveBayesModel;
+import com.ahaines.machinelearning.decisiontree.QuantisedDecisionTreeModelService;
 import com.ahaines.machinelearning.naivebayes.NaiveBayesModelService;
 
 /**
@@ -86,29 +81,57 @@ public class MainRunner {
 		LOG.info("############ ---- Decision Tree Tests ---- ############\n");
 		LOG.info("\timpurity calculations\n");
 		LOG.info("\t\tMinority class impurity calculations");
-		performDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getMinorityClassImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), cluster);
+		performContinuousDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getMinorityClassImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), constantBucket);
 		LOG.info("\t\tGini index impurity calculations");
-		performDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), cluster);
+		performContinuousDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), constantBucket);
 		LOG.info("\t\tEntropy impurity calculations");
-		performDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getEntropyImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), cluster);
+		performContinuousDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getEntropyImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), constantBucket);
 		
 		LOG.info("\t\tSquare root Gini index calculations");
-		performDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), cluster);
+		performContinuousDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), constantBucket);
 		
 		LOG.info("\tMissing Features\n");
 		LOG.info("\t\tMost Homogenious");
-		performDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getHomogeniousMissingFeatureClassifier(), cluster);
+		performContinuousDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getHomogeniousMissingFeatureClassifier(), constantBucket);
 		LOG.info("\t\tMost Rated");
-		performDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), cluster);
+		performContinuousDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), constantBucket);
 		
 
 		LOG.info("\tContinuous Feature Splitters\n");
 		LOG.info("\t\tAverage feature splitter");
-		performDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), average);
+		performContinuousDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), average);
 		LOG.info("\t\tCluster splitter");
-		performDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), cluster);
-		//LOG.info("\t\tConstant Bucket splitter");
-		//performDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), constantBucket);
+		performContinuousDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), cluster);
+		LOG.info("\t\tConstant Bucket splitter");
+		performContinuousDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), constantBucket);
+		
+		LOG.info("############ ---- Pre Quantised Decision Tree Tests ---- ############\n");
+		LOG.info("\timpurity calculations\n");
+		LOG.info("\t\tMinority class impurity calculations");
+		performPreQuantisedDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getMinorityClassImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), constantBucket);
+		LOG.info("\t\tGini index impurity calculations");
+		performPreQuantisedDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), constantBucket);
+		LOG.info("\t\tEntropy impurity calculations");
+		performPreQuantisedDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getEntropyImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), constantBucket);
+		
+		LOG.info("\t\tSquare root Gini index calculations");
+		performPreQuantisedDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), constantBucket);
+		
+		LOG.info("\tMissing Features\n");
+		LOG.info("\t\tMost Homogenious");
+		performPreQuantisedDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getHomogeniousMissingFeatureClassifier(), constantBucket);
+		LOG.info("\t\tMost Rated");
+		performPreQuantisedDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), constantBucket);
+		
+
+		LOG.info("\tContinuous Feature Splitters\n");
+		LOG.info("\t\tAverage feature splitter");
+		performPreQuantisedDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), average);
+		LOG.info("\t\tCluster splitter");
+		performPreQuantisedDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), cluster);
+		LOG.info("\t\tConstant Bucket splitter");
+		performPreQuantisedDecisionTreeRuns(trainingLoader, testLoader, ImpurityProcessors.getSquareRootGiniIndexImpurityProcessor(), MissingFeatureClassifier.CLASSIFIERS.getMostRatedMissingFeatureClassifier(), constantBucket);
+		
 		
 		LOG.info("############ ---- Naive Bayes Tests ---- ############\n");
 		
@@ -147,12 +170,12 @@ public class MainRunner {
 	     }
 	}
 	//0.3311
-	private static void performDecisionTreeRuns(ClassifiedDatasetLoader trainingLoader, ClassifiedDatasetLoader testLoader, ImpurityProcessor processor, MissingFeatureClassifier missingFeatureClassifier, ContinuousFeatureQuantiser continuousFeatureSplitter) throws IOException{
+	private static void performContinuousDecisionTreeRuns(ClassifiedDatasetLoader trainingLoader, ClassifiedDatasetLoader testLoader, ImpurityProcessor processor, MissingFeatureClassifier missingFeatureClassifier, ContinuousFeatureQuantiser continuousFeatureQuantiser) throws IOException{
 		double homogeniousThreshold = 1;
 		
 		StringBuilder builder = new StringBuilder();
 		while(homogeniousThreshold >= 0.75){
-			Metrics runMetrics = performRun(trainingLoader, testLoader, homogeniousThreshold, processor, missingFeatureClassifier, ContinuousFeatureSplitters.getFeatureSplitter(continuousFeatureSplitter));
+			Metrics runMetrics = performRun(trainingLoader, testLoader, homogeniousThreshold, processor, missingFeatureClassifier, continuousFeatureQuantiser);
 			//Metrics.appendCsvValue(DEFAULT_DECIMAL_FORMAT.format(homogeniousThreshold), builder);
 			//builder.append(runMetrics.toCsv());
 			//builder.append("\n");
@@ -165,11 +188,36 @@ public class MainRunner {
 		LOG.info(builder.toString());
 	}
 	
-	private static Metrics performRun(ClassifiedDatasetLoader trainingLoader, ClassifiedDatasetLoader testLoader, double homogeniousThreshold, ImpurityProcessor processor, MissingFeatureClassifier missingFeatureClassifier, ContinuousFeatureSplitter continuousFeatureSplitter) throws IOException{
-		ModelService<Id3Model> service = new DecisionTreeModelService(processor, continuousFeatureSplitter, homogeniousThreshold, missingFeatureClassifier);
+	private static void performPreQuantisedDecisionTreeRuns(ClassifiedDatasetLoader trainingLoader, ClassifiedDatasetLoader testLoader, ImpurityProcessor processor, MissingFeatureClassifier missingFeatureClassifier, ContinuousFeatureQuantiser continuousFeatureQuantiser) throws IOException{
+		double homogeniousThreshold = 1;
+		
+		StringBuilder builder = new StringBuilder();
+		while(homogeniousThreshold >= 0.75){
+			Metrics runMetrics = performQuantisedRun(trainingLoader, testLoader, homogeniousThreshold, processor, missingFeatureClassifier, continuousFeatureQuantiser);
+			//Metrics.appendCsvValue(DEFAULT_DECIMAL_FORMAT.format(homogeniousThreshold), builder);
+			//builder.append(runMetrics.toCsv());
+			//builder.append("\n");
+		
+			System.out.println("\tthreshold = "+homogeniousThreshold);
+			System.out.println(runMetrics);
+			
+			homogeniousThreshold -= 0.05;
+		}
+		LOG.info(builder.toString());
+	}
+	
+	private static Metrics performRun(ClassifiedDatasetLoader trainingLoader, ClassifiedDatasetLoader testLoader, double homogeniousThreshold, ImpurityProcessor processor, MissingFeatureClassifier missingFeatureClassifier, ContinuousFeatureQuantiser continuousFeatureQuantiser) throws IOException{
+		ModelService<Id3Model> service = new DecisionTreeModelService(processor, continuousFeatureQuantiser, homogeniousThreshold, missingFeatureClassifier);
 		
 		return performRun(trainingLoader, testLoader, service);
 	}
+	
+	private static Metrics performQuantisedRun(ClassifiedDatasetLoader trainingLoader, ClassifiedDatasetLoader testLoader, double homogeniousThreshold, ImpurityProcessor processor, MissingFeatureClassifier missingFeatureClassifier, ContinuousFeatureQuantiser continuousFeatureQuantiser) throws IOException{
+		ModelService<Id3Model> service = new QuantisedDecisionTreeModelService(processor, continuousFeatureQuantiser, homogeniousThreshold, missingFeatureClassifier);
+		
+		return performRun(trainingLoader, testLoader, service);
+	}
+	
 	
 	private static <T extends Model> Metrics performRun(ClassifiedDatasetLoader trainingLoader, ClassifiedDatasetLoader testLoader, ModelService<T> modelService) throws IOException{
 		try{

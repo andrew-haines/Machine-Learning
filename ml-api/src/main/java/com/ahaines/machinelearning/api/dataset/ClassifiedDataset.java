@@ -13,102 +13,117 @@ import com.google.common.collect.Iterables;
  * @author andrewhaines
  *
  */
-public class ClassifiedDataset implements Dataset<ClassifiedFeatureSet>{
-
-	protected final Dataset<? extends FeatureSet> dataset;
-	protected final Map<Identifier, ? extends Classification<?>> classifications;
-	private final Iterable<ClassifiedFeatureSet> instances;
+public interface ClassifiedDataset extends Dataset<ClassifiedFeatureSet>{
 	
-	protected ClassifiedDataset(Dataset<? extends FeatureSet> dataset, final Map<Identifier, ? extends Classification<?>> classifications){
-		this.dataset = dataset;
-		this.classifications = classifications;
+	public static final ClassifiedDatasetFactory FACTORY = new ClassifiedDatasetFactory();
+	
+	public Map<Identifier, ? extends Classification<?>> getClassifications();
+	
+	public static class ClassifiedDatasetImpl implements ClassifiedDataset{
 		
-		final Iterable<? extends FeatureSet> dataInstances = dataset.getInstances();
+		protected final Dataset<? extends FeatureSet> dataset;
+		protected final Map<Identifier, ? extends Classification<?>> classifications;
+		private final Iterable<ClassifiedFeatureSet> instances;
 		
-		instances = new CachedIterable<ClassifiedFeatureSet>(new Iterable<ClassifiedFeatureSet>(){
-
-			@Override
-			public Iterator<ClassifiedFeatureSet> iterator() {
-				final Iterator<? extends FeatureSet> it = dataInstances.iterator();
-				
-				return new Iterator<ClassifiedFeatureSet>(){
-
-					@Override
-					public boolean hasNext() {
-						return it.hasNext();
-					}
-
-					@Override
-					public ClassifiedFeatureSet next() {
-						FeatureSet featureSet = it.next();
-						return new ClassifiedFeatureSet(featureSet, classifications.get(featureSet.getId()));
-					}
-
-					@Override
-					public void remove() {
-						it.remove();
-					}
-					
-				};
-			}
+		protected ClassifiedDatasetImpl(Dataset<? extends FeatureSet> dataset, final Map<Identifier, ? extends Classification<?>> classifications){
+			this.dataset = dataset;
+			this.classifications = classifications;
 			
-		});
-	}
-	
-	public static ClassifiedDataset create(Dataset<? extends FeatureSet> dataset, Iterable<? extends Classification<?>> classifications){
-		
-		return create(dataset, Identifiable.UTIL.index(classifications));
-	}
-	
-	public static ClassifiedDataset create(Dataset<? extends FeatureSet> dataset, Map<Identifier, ? extends Classification<?>> classifications){
-		
-		return new ClassifiedDataset(dataset, classifications);
-	}
-	
-	public ClassifiedFeatureSet getInstance(Identifier instanceId){
-		FeatureSet instance = dataset.getInstance(instanceId);
-		
-		Classification<?> classification = classifications.get(instanceId);
-		
-		return new ClassifiedFeatureSet(instance, classification);
-	}
-	
-	public String toString(){
-		
-		StringBuilder builder = new StringBuilder();
-		for (ClassifiedFeatureSet instance: getInstances()){
-			builder.append(instance);
-			builder.append("\n");
-		}
-		return builder.toString();
-	}
-	
-	@Override
-	public Iterable<Class<? extends Feature<?>>> getFeatureTypes(){
-		return dataset.getFeatureTypes();
-	}
-	
-	@Override
-	public Iterable<ClassifiedFeatureSet> getInstances(){
-		return instances;
-	}
-	
-	public static Iterable<ClassifiedFeatureSet> filterFeatureSet(Iterable<ClassifiedFeatureSet> instances, final FeatureDefinition feature){
-		return Iterables.filter(instances, new Predicate<ClassifiedFeatureSet>(){
+			final Iterable<? extends FeatureSet> dataInstances = dataset.getInstances();
 			
-			@Override
-			public boolean apply(ClassifiedFeatureSet input){
-				
-				Feature<?> instanceFeatureValue = input.getFeature(feature.getFeatureType());
-				
-				if (instanceFeatureValue == Features.MISSING){
-					 // if we are a missing feature then include in filter.
+			instances = new CachedIterable<ClassifiedFeatureSet>(new Iterable<ClassifiedFeatureSet>(){
+
+				@Override
+				public Iterator<ClassifiedFeatureSet> iterator() {
+					final Iterator<? extends FeatureSet> it = dataInstances.iterator();
 					
-					return true;
+					return new Iterator<ClassifiedFeatureSet>(){
+
+						@Override
+						public boolean hasNext() {
+							return it.hasNext();
+						}
+
+						@Override
+						public ClassifiedFeatureSet next() {
+							FeatureSet featureSet = it.next();
+							return new ClassifiedFeatureSet(featureSet, classifications.get(featureSet.getId()));
+						}
+
+						@Override
+						public void remove() {
+							it.remove();
+						}
+						
+					};
 				}
-				return instanceFeatureValue.equals(feature.getFeature());
+				
+			});
+		}
+		
+		public ClassifiedFeatureSet getInstance(Identifier instanceId){
+			FeatureSet instance = dataset.getInstance(instanceId);
+			
+			Classification<?> classification = classifications.get(instanceId);
+			
+			return new ClassifiedFeatureSet(instance, classification);
+		}
+		
+		public String toString(){
+			
+			StringBuilder builder = new StringBuilder();
+			for (ClassifiedFeatureSet instance: getInstances()){
+				builder.append(instance);
+				builder.append("\n");
 			}
-		});
-	}
+			return builder.toString();
+		}
+		
+		@Override
+		public Iterable<Class<? extends Feature<?>>> getFeatureTypes(){
+			return dataset.getFeatureTypes();
+		}
+		
+		@Override
+		public Iterable<ClassifiedFeatureSet> getInstances(){
+			return instances;
+		}
 
+		@Override
+		public Map<Identifier, ? extends Classification<?>> getClassifications() {
+			return classifications;
+		}
+	}
+	
+	public static class ClassifiedDatasetFactory {
+		
+		public ClassifiedDataset create(Dataset<? extends FeatureSet> dataset, Iterable<? extends Classification<?>> classifications){
+			
+			return create(dataset, Identifiable.UTIL.index(classifications));
+		}
+		
+		public ClassifiedDataset create(Dataset<? extends FeatureSet> dataset, Map<Identifier, ? extends Classification<?>> classifications){
+			
+			return new ClassifiedDatasetImpl(dataset, classifications);
+		}
+		
+		public Iterable<ClassifiedFeatureSet> filterFeatureSet(Iterable<ClassifiedFeatureSet> instances, final FeatureDefinition feature){
+			return Iterables.filter(instances, new Predicate<ClassifiedFeatureSet>(){
+				
+				@SuppressWarnings({ "rawtypes"})
+				@Override
+				public boolean apply(ClassifiedFeatureSet input){
+					
+					Feature<?> instanceFeatureValue = input.getFeature(feature.getFeatureType());
+					
+					if (instanceFeatureValue == Features.MISSING){
+						 // if we are a missing feature then include in filter.
+						
+						return true;
+					}
+					return instanceFeatureValue.equals((Feature)feature.getFeature());
+				}
+			});
+		}
+	}
 }
