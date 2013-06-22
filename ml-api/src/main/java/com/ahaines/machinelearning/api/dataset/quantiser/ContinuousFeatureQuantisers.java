@@ -21,7 +21,7 @@ public class ContinuousFeatureQuantisers {
 		return new ContinuousFeatureQuantiser(){
 
 			@Override
-			public <T extends Number & Comparable<T>> Collection<RangeFeature<T>> quantise(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<T>> featureQuantiserType, QuantiserEventProcessor processor) {
+			public <T extends Number & Comparable<T>> Collection<RangeFeature<T>> quantise(Iterable<? extends ClassifiedFeatureSet<? extends Enum<?>>> instances, final Class<? extends ContinuousFeature<T>> featureQuantiserType, QuantiserEventProcessor processor) {
 				
 				final Collection<RangeFeature<T>> allFeatureRanges = new ArrayList<RangeFeature<T>>();
 				
@@ -32,7 +32,7 @@ public class ContinuousFeatureQuantisers {
 				
 				double sum = 0;
 				
-				for (ClassifiedFeatureSet instance: instances){
+				for (ClassifiedFeatureSet<? extends Enum<?>> instance: instances){
 					
 					ContinuousFeature<T> conFeature = instance.getFeature(featureQuantiserType);
 					if (converter == null){
@@ -48,9 +48,9 @@ public class ContinuousFeatureQuantisers {
 				
 				RangeFeature<T> newFeature = createRangeFeature(converter.getMinPossibleValue(), converter.castToType(average), allFeatureRanges);
 				
-				processor.newRangeDetermined(newFeature, Iterables.filter(instances, new Predicate<ClassifiedFeatureSet>() {
+				processor.newRangeDetermined(newFeature, Iterables.filter(instances, new Predicate<ClassifiedFeatureSet<? extends Enum<?>>>() {
 					
-					public boolean apply(ClassifiedFeatureSet instance){
+					public boolean apply(ClassifiedFeatureSet<? extends Enum<?>> instance){
 						return instance.getFeature(featureQuantiserType).getValue().intValue() < average;
 					}
 					
@@ -58,9 +58,9 @@ public class ContinuousFeatureQuantisers {
 				
 				newFeature = createRangeFeature(converter.castToType(average), converter.getMaxPossibleValue(), true, allFeatureRanges);
 				
-				processor.newRangeDetermined(newFeature, Iterables.filter(instances, new Predicate<ClassifiedFeatureSet>() {
+				processor.newRangeDetermined(newFeature, Iterables.filter(instances, new Predicate<ClassifiedFeatureSet<? extends Enum<?>>>() {
 					
-					public boolean apply(ClassifiedFeatureSet instance){
+					public boolean apply(ClassifiedFeatureSet<? extends Enum<?>> instance){
 						return instance.getFeature(featureQuantiserType).getValue().intValue() >= average;
 					}
 					
@@ -90,7 +90,7 @@ public class ContinuousFeatureQuantisers {
 		return new ContinuousFeatureQuantiser(){
 
 			@Override
-			public <T extends Number & Comparable<T>> Collection<RangeFeature<T>> quantise(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<T>> featureQuantiserType, QuantiserEventProcessor processor) {
+			public <T extends Number & Comparable<T>> Collection<RangeFeature<T>> quantise(Iterable<? extends ClassifiedFeatureSet<? extends Enum<?>>> instances, final Class<? extends ContinuousFeature<T>> featureQuantiserType, QuantiserEventProcessor processor) {
 				
 				final Collection<RangeFeature<T>> allFeatureRanges = new ArrayList<RangeFeature<T>>();
 
@@ -99,7 +99,7 @@ public class ContinuousFeatureQuantisers {
 				 * RangeFeature's with lower, upper bounds as the classification of each instance changes
 				 */
 				
-				List<ClassifiedFeatureSet> sortedList = sortInstancesBasedOnFeature(instances, featureQuantiserType);
+				List<ClassifiedFeatureSet<? extends Enum<?>>> sortedList = sortInstancesBasedOnFeature(instances, featureQuantiserType);
 				
 				/*
 				 *  not sure if this is correct. What if a particular classification does not exist in this set?
@@ -109,10 +109,10 @@ public class ContinuousFeatureQuantisers {
 				T min = null;
 				T lastRecord = null;
 				Enum<?> lastClassification = null;
-				Collection<ClassifiedFeatureSet> tempInstanceSplit = new ArrayList<ClassifiedFeatureSet>();
+				Collection<ClassifiedFeatureSet<? extends Enum<?>>> tempInstanceSplit = new ArrayList<ClassifiedFeatureSet<? extends Enum<?>>>();
 				NumberConverter<T> converter = null;
 				
-				for (ClassifiedFeatureSet instance: sortedList){
+				for (ClassifiedFeatureSet<? extends Enum<?>> instance: sortedList){
 					T newRecord = instance.getFeature(featureQuantiserType).getValue();
 					if (lastClassification == null){
 						lastClassification = instance.getClassification().getValue();
@@ -126,7 +126,7 @@ public class ContinuousFeatureQuantisers {
 							
 							RangeFeature<T> newRange = createRangeFeature(min, newRecord, allFeatureRanges);
 							processor.newRangeDetermined(newRange, tempInstanceSplit);
-							tempInstanceSplit = new ArrayList<ClassifiedFeatureSet>();
+							tempInstanceSplit = new ArrayList<ClassifiedFeatureSet<? extends Enum<?>>>();
 							min = newRecord;
 							lastRecord = newRecord;
 						}
@@ -164,8 +164,8 @@ public class ContinuousFeatureQuantisers {
 		return new ContinuousFeatureQuantiser(){
 
 			@Override
-			public <T extends Number & Comparable<T>> Collection<RangeFeature<T>> quantise(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<T>> featureQuantiserType, QuantiserEventProcessor processor) {
-				final List<ClassifiedFeatureSet> sortedList = sortInstancesBasedOnFeature(instances, featureQuantiserType);
+			public <T extends Number & Comparable<T>> Collection<RangeFeature<T>> quantise(Iterable<? extends ClassifiedFeatureSet<? extends Enum<?>>> instances, final Class<? extends ContinuousFeature<T>> featureQuantiserType, QuantiserEventProcessor processor) {
+				final List<ClassifiedFeatureSet<? extends Enum<?>>> sortedList = sortInstancesBasedOnFeature(instances, featureQuantiserType);
 				final Collection<RangeFeature<T>> allFeatureRanges = new ArrayList<RangeFeature<T>>();
 				final NumberConverter<T> converter = sortedList.get(0).getFeature(featureQuantiserType).getNumberConverter();
 				
@@ -208,11 +208,11 @@ public class ContinuousFeatureQuantisers {
 					
 					RangeFeature<T> newRange = createRangeFeature(typedLowerBound, typedUpperBound, allFeatureRanges);
 					final int seekForwardAmount = latestInstanceIndex.get(); // optimisation because we dont want to re-iterate over instance that we have already added. Note that this only works if, the caller iterates.
-					processor.newRangeDetermined(newRange, new Iterable<ClassifiedFeatureSet>(){
+					processor.newRangeDetermined(newRange, new Iterable<ClassifiedFeatureSet<? extends Enum<?>>>(){
 
 						@Override
-						public Iterator<ClassifiedFeatureSet> iterator() {
-							return new Iterator<ClassifiedFeatureSet>(){
+						public Iterator<ClassifiedFeatureSet<? extends Enum<?>>> iterator() {
+							return new Iterator<ClassifiedFeatureSet<? extends Enum<?>>>(){
 								
 								private int currentIndex = seekForwardAmount;
 
@@ -231,8 +231,8 @@ public class ContinuousFeatureQuantisers {
 								}
 
 								@Override
-								public ClassifiedFeatureSet next() {
-									ClassifiedFeatureSet instance = sortedList.get(currentIndex++);
+								public ClassifiedFeatureSet<? extends Enum<?>> next() {
+									ClassifiedFeatureSet<? extends Enum<?>> instance = sortedList.get(currentIndex++);
 									latestInstanceIndex.set(currentIndex);
 									
 									return instance;
@@ -259,12 +259,12 @@ public class ContinuousFeatureQuantisers {
 		};
 	}
 	
-	private static List<ClassifiedFeatureSet> sortInstancesBasedOnFeature(Iterable<ClassifiedFeatureSet> instances, final Class<? extends ContinuousFeature<?>> featureType){
-		List<ClassifiedFeatureSet> sortedList = Lists.newArrayList(instances);
-		Collections.sort(sortedList, new Comparator<ClassifiedFeatureSet>(){
+	private static List<ClassifiedFeatureSet<? extends Enum<?>>> sortInstancesBasedOnFeature(Iterable<? extends ClassifiedFeatureSet<? extends Enum<?>>> instances, final Class<? extends ContinuousFeature<?>> featureType){
+		List<ClassifiedFeatureSet<? extends Enum<?>>> sortedList = Lists.newArrayList(instances);
+		Collections.sort(sortedList, new Comparator<ClassifiedFeatureSet<? extends Enum<?>>>(){
 
 			@Override
-			public int compare(ClassifiedFeatureSet o1, ClassifiedFeatureSet o2) {
+			public int compare(ClassifiedFeatureSet<? extends Enum<?>> o1, ClassifiedFeatureSet<? extends Enum<?>> o2) {
 				Number feature1 = o1.getFeature(featureType).getValue();
 				Number feature2 = o2.getFeature(featureType).getValue();
 				return (int)(feature1.doubleValue() - feature2.doubleValue());
@@ -275,16 +275,16 @@ public class ContinuousFeatureQuantisers {
 		return sortedList;
 	}
 	
-	private static class SingleValueIteratorFromSortedList<T extends Number & Comparable<T>> implements Iterable<ClassifiedFeatureSet>{
+	private static class SingleValueIteratorFromSortedList<T extends Number & Comparable<T>> implements Iterable<ClassifiedFeatureSet<? extends Enum<?>>>{
 
 		private static final int NOT_INITALISED = -1;
 		private final T value;
-		private final Iterable<ClassifiedFeatureSet> items;
+		private final Iterable<ClassifiedFeatureSet<? extends Enum<?>>> items;
 		private final Class<? extends ContinuousFeature<T>> featureType;
 		private final boolean greaterThan;
 		private int iteratorSize = NOT_INITALISED;
 		
-		private SingleValueIteratorFromSortedList(T value, List<ClassifiedFeatureSet> items, Class<? extends ContinuousFeature<T>> featureType, boolean greaterThan){
+		private SingleValueIteratorFromSortedList(T value, List<ClassifiedFeatureSet<? extends Enum<?>>> items, Class<? extends ContinuousFeature<T>> featureType, boolean greaterThan){
 			this.value = value;
 			if(greaterThan){
 				this.items = items;
@@ -295,14 +295,14 @@ public class ContinuousFeatureQuantisers {
 			this.greaterThan = greaterThan;
 		}
 		@Override
-		public Iterator<ClassifiedFeatureSet> iterator() {
+		public Iterator<ClassifiedFeatureSet<? extends Enum<?>>> iterator() {
 			
-			final Iterator<ClassifiedFeatureSet> masterIt = items.iterator();
+			final Iterator<ClassifiedFeatureSet<? extends Enum<?>>> masterIt = items.iterator();
 			iteratorSize = 0;
-			return new Iterator<ClassifiedFeatureSet>(){
+			return new Iterator<ClassifiedFeatureSet<? extends Enum<?>>>(){
 
 				boolean hasFinished = false;
-				ClassifiedFeatureSet nextValue;
+				ClassifiedFeatureSet<? extends Enum<?>> nextValue;
 				@Override
 				public boolean hasNext() {
 					
@@ -327,7 +327,7 @@ public class ContinuousFeatureQuantisers {
 				}
 
 				@Override
-				public ClassifiedFeatureSet next() {
+				public ClassifiedFeatureSet<? extends Enum<?>> next() {
 					if (nextValue == null){
 						nextValue = masterIt.next();
 					}
@@ -348,7 +348,7 @@ public class ContinuousFeatureQuantisers {
 		}
 		public int getIteratorSize() {
 			if (iteratorSize == NOT_INITALISED){
-				for (ClassifiedFeatureSet value: this){}
+				for (@SuppressWarnings("unused") ClassifiedFeatureSet<? extends Enum<?>> value: this){}
 			}
 			return iteratorSize;
 		}

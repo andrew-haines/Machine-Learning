@@ -77,25 +77,24 @@ public class ImpurityProcessorUnitTest {
 		assertThat(impurity, is(closeTo(0.91, 0.01)));
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static Iterable<ClassifiedFeatureSet> getPureFeatureSet() {
-		List<ClassifiedFeatureSet> features = new ArrayList<ClassifiedFeatureSet>();
+	private static Iterable<ClassifiedFeatureSet<TestClassification>> getPureFeatureSet() {
+		List<ClassifiedFeatureSet<TestClassification>> features = new ArrayList<ClassifiedFeatureSet<TestClassification>>();
 		
 		FeatureSetFactory featureSetFactory = createFeatureSetFactory();
 		
 		Identifier id = Identifier.FACTORY.createIdentifier(1);
 		
-		ClassifiedFeatureSet instance1 = new ClassifiedFeatureSet(featureSetFactory.createFeatureSet(id, Arrays.asList(new FeatureDefinition(BinaryFeature1.TRUE, BinaryFeature1.class),
-				   new FeatureDefinition(BinaryFeature2.TRUE, BinaryFeature2.class))), new Classification(id, TestClassification.TRUE));
+		ClassifiedFeatureSet<TestClassification> instance1 = new ClassifiedFeatureSet<TestClassification>(featureSetFactory.createFeatureSet(id, Arrays.asList(new FeatureDefinition(BinaryFeature1.TRUE, BinaryFeature1.class),
+				   new FeatureDefinition(BinaryFeature2.TRUE, BinaryFeature2.class))), new Classification<TestClassification>(id, TestClassification.TRUE));
 		
 		id = Identifier.FACTORY.createIdentifier(2);
 		
-		ClassifiedFeatureSet instance2 = new ClassifiedFeatureSet(featureSetFactory.createFeatureSet(id, Arrays.asList(new FeatureDefinition(BinaryFeature1.TRUE, BinaryFeature1.class),
-				   																														   new FeatureDefinition(BinaryFeature2.FALSE, BinaryFeature2.class))), new Classification(id, TestClassification.TRUE));
+		ClassifiedFeatureSet<TestClassification> instance2 = new ClassifiedFeatureSet<TestClassification>(featureSetFactory.createFeatureSet(id, Arrays.asList(new FeatureDefinition(BinaryFeature1.TRUE, BinaryFeature1.class),
+				   																														   new FeatureDefinition(BinaryFeature2.FALSE, BinaryFeature2.class))), new Classification<TestClassification>(id, TestClassification.TRUE));
 		
 		id = Identifier.FACTORY.createIdentifier(3);
-		ClassifiedFeatureSet instance3 = new ClassifiedFeatureSet(featureSetFactory.createFeatureSet(id, Arrays.asList(new FeatureDefinition(BinaryFeature1.FALSE, BinaryFeature1.class),
-				   new FeatureDefinition(BinaryFeature2.FALSE, BinaryFeature2.class))), new Classification(id, TestClassification.TRUE));
+		ClassifiedFeatureSet<TestClassification> instance3 = new ClassifiedFeatureSet<TestClassification>(featureSetFactory.createFeatureSet(id, Arrays.asList(new FeatureDefinition(BinaryFeature1.FALSE, BinaryFeature1.class),
+				   new FeatureDefinition(BinaryFeature2.FALSE, BinaryFeature2.class))), new Classification<TestClassification>(id, TestClassification.TRUE));
 	
 		
 		features.add(instance1);
@@ -105,26 +104,25 @@ public class ImpurityProcessorUnitTest {
 		return features;
 	}
 	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static Iterable<ClassifiedFeatureSet> getImpureFeatureSet() {
-		List<ClassifiedFeatureSet> features = new ArrayList<ClassifiedFeatureSet>();
+	private static Iterable<ClassifiedFeatureSet<TestClassification>> getImpureFeatureSet() {
+		List<ClassifiedFeatureSet<TestClassification>> features = new ArrayList<ClassifiedFeatureSet<TestClassification>>();
 		
 		FeatureSetFactory featureSetFactory = createFeatureSetFactory();
 		
 		Identifier id = Identifier.FACTORY.createIdentifier(1);
 		
-		ClassifiedFeatureSet instance1 = new ClassifiedFeatureSet(featureSetFactory.createFeatureSet(id, Arrays.asList(new FeatureDefinition(BinaryFeature1.TRUE, BinaryFeature1.class),
-				   new FeatureDefinition(BinaryFeature2.TRUE, BinaryFeature2.class))), new Classification(id, TestClassification.TRUE));
+		ClassifiedFeatureSet<TestClassification> instance1 = new ClassifiedFeatureSet<TestClassification>(featureSetFactory.createFeatureSet(id, Arrays.asList(new FeatureDefinition(BinaryFeature1.TRUE, BinaryFeature1.class),
+				   new FeatureDefinition(BinaryFeature2.TRUE, BinaryFeature2.class))), new Classification<TestClassification>(id, TestClassification.TRUE));
 		
 		id = Identifier.FACTORY.createIdentifier(2);
 		
-		ClassifiedFeatureSet instance2 = new ClassifiedFeatureSet(featureSetFactory.createFeatureSet(id, Arrays.asList(new FeatureDefinition(BinaryFeature1.TRUE, BinaryFeature1.class),
+		ClassifiedFeatureSet<TestClassification> instance2 = new ClassifiedFeatureSet<TestClassification>(featureSetFactory.createFeatureSet(id, Arrays.asList(new FeatureDefinition(BinaryFeature1.TRUE, BinaryFeature1.class),
 				   																														   new FeatureDefinition(BinaryFeature2.FALSE, BinaryFeature2.class))), 
-				   																	    new Classification(id, TestClassification.FALSE));
+				   																	    new Classification<TestClassification>(id, TestClassification.FALSE));
 		
 		id = Identifier.FACTORY.createIdentifier(3);
-		ClassifiedFeatureSet instance3 = new ClassifiedFeatureSet(featureSetFactory.createFeatureSet(id, Arrays.asList(new FeatureDefinition(BinaryFeature1.FALSE, BinaryFeature1.class),
-				   new FeatureDefinition(BinaryFeature2.FALSE, BinaryFeature2.class))), new Classification(id, TestClassification.FALSE));
+		ClassifiedFeatureSet<TestClassification> instance3 = new ClassifiedFeatureSet<TestClassification>(featureSetFactory.createFeatureSet(id, Arrays.asList(new FeatureDefinition(BinaryFeature1.FALSE, BinaryFeature1.class),
+				   new FeatureDefinition(BinaryFeature2.FALSE, BinaryFeature2.class))), new Classification<TestClassification>(id, TestClassification.FALSE));
 	
 		features.add(instance1);
 		features.add(instance2);

@@ -6,7 +6,7 @@ package com.ahaines.machinelearning.api.dataset;
  *
  * @param <T> The enum that represents the classifications
  */
-public class Classification<T extends Enum<T>> implements Identifiable{
+public class Classification<T> implements Identifiable{
 
 	private final Identifier id;
 	private final T value;

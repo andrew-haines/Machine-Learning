@@ -1,6 +1,6 @@
 package com.ahaines.machinelearning.api.dataset;
 
-public interface ClassifiedDatasetLoader {
+public interface ClassifiedDatasetLoader<C> {
 
-	ClassifiedDataset getClassifiedDataset();
+	ClassifiedDataset<C> getClassifiedDataset();
 }

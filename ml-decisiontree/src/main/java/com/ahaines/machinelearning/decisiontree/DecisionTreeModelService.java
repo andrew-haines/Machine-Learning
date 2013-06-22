@@ -56,7 +56,7 @@ import com.google.common.collect.Lists;
  * @author andrewhaines
  *
  */
-public class DecisionTreeModelService implements ModelService<Id3Model>{
+public class DecisionTreeModelService<C extends Enum<C>> implements ModelService<Id3Model<C>, C>{
 
 	private static final double DEFAULT_HOMOGENIOUS_THRESHOLD = 0.95;
 	private final ImpurityProcessor impurityProcessor;
@@ -77,10 +77,10 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 	}
 	
 	@Override
-	public Id3Model trainModel(ClassifiedDataset trainingData){
+	public Id3Model<C> trainModel(ClassifiedDataset<C> trainingData){
 		
-		Id3Node root = growTree(trainingData.getInstances(), trainingData.getFeatureTypes(), new FeatureDefinition(Features.ROOT, Features.class));
-		Id3Model newModel = new Id3Model(root);
+		Id3Node<C> root = growTree(trainingData.getInstances(), trainingData.getFeatureTypes(), new FeatureDefinition(Features.ROOT, Features.class));
+		Id3Model<C> newModel = new Id3Model<C>(root);
 		
 		if (LOG.isDebugEnabled()){
 			LOG.debug("model trained against "+Iterables.size(trainingData.getInstances()));
@@ -88,32 +88,32 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 		return newModel;
 	}
 
-	public boolean isHomogenious(HomogeniousRating rating) {
+	public boolean isHomogenious(HomogeniousRating<C> rating) {
 		return rating.maximumClassificationSplit >= homogeniousThreshold;
 	}
 	
-	private Id3Node growTree(Iterable<ClassifiedFeatureSet> instances, Iterable<Class<? extends Feature<?>>> featureTypes, FeatureDefinition featureDef){
-		HomogeniousRating homogenious = getHomogeniousRating(instances);
+	private Id3Node<C> growTree(Iterable<ClassifiedFeatureSet<C>> instances, Iterable<Class<? extends Feature<?>>> featureTypes, FeatureDefinition featureDef){
+		HomogeniousRating<C> homogenious = getHomogeniousRating(instances);
 		if (isHomogenious(homogenious) || Iterables.isEmpty(featureTypes)){
 			if (isHomogenious(homogenious)){
 				LOG.debug("Prunning");
 			} else{
 				LOG.debug("no more feature to split on");
 			}
-			return new Id3Node(homogenious.mostHomogeniousClassification, featureDef);
+			return new Id3Node<C>(homogenious.mostHomogeniousClassification, featureDef);
 		}
 		
-		FeatureSplits bestFeatureSplit = getBestSplit(instances, featureTypes);
-		DecisionId3Node parentNode;
+		FeatureSplits<C> bestFeatureSplit = getBestSplit(instances, featureTypes);
+		DecisionId3Node<C> parentNode;
 		if (featureDef.getFeature() == Features.ROOT){
-			parentNode = new DecisionId3Node(homogenious.mostHomogeniousClassification, new FeatureDefinition(Features.ROOT, bestFeatureSplit.featureType), missingFeatureClassifier);
+			parentNode = new DecisionId3Node<C>(homogenious.mostHomogeniousClassification, new FeatureDefinition(Features.ROOT, bestFeatureSplit.featureType), missingFeatureClassifier);
 		} else{
-			parentNode = new DecisionId3Node(homogenious.mostHomogeniousClassification, new FeatureDefinition(featureDef.getFeature(), bestFeatureSplit.featureType), missingFeatureClassifier);
+			parentNode = new DecisionId3Node<C>(homogenious.mostHomogeniousClassification, new FeatureDefinition(featureDef.getFeature(), bestFeatureSplit.featureType), missingFeatureClassifier);
 		}
 		
-		for (final Split split: bestFeatureSplit.splits){
+		for (final Split<C> split: bestFeatureSplit.splits){
 			if (Iterables.isEmpty(split.getInstancesInSplit())){
-				parentNode.addDecisionNode(new Id3Node(homogenious.mostHomogeniousClassification, split.getFeature()));
+				parentNode.addDecisionNode(new Id3Node<C>(homogenious.mostHomogeniousClassification, split.getFeature()));
 			} else{
 				parentNode.addDecisionNode(growTree(split.getInstancesInSplit(), Iterables.filter(featureTypes, new Predicate<Class<? extends Feature<?>>>(){
 					
@@ -129,49 +129,48 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 		return parentNode;
 	}
 	
-	private double getImpurityOfSplit(Iterable<Split> splits, int totalInstances){
+	private double getImpurityOfSplit(Iterable<Split<C>> splits, int totalInstances){
 		double totalImpurity = 0;
 		
-		for (Split split: splits){
+		for (Split<C> split: splits){
 			totalImpurity += getWeight(split, totalInstances) * impurityProcessor.getImpurity(split.getInstancesInSplit());
 		}
 		
 		return totalImpurity;
 	}
 
-	private static double getWeight(Split split, int totalInstances) {
+	private static <C extends Enum<C>> double getWeight(Split<C> split, int totalInstances) {
 		return (double)split.getInstancesInSplit().size() / (double)totalInstances;
 	}
 
 	/*
 	 * Looks at the proportions of all classifications and takes the biggest proportion
 	 */
-	private HomogeniousRating getHomogeniousRating(Iterable<ClassifiedFeatureSet> instances){
-		Map<Enum<?>, Double> proportions = ImpurityProcessors.getProportions(instances);
+	private HomogeniousRating<C> getHomogeniousRating(Iterable<ClassifiedFeatureSet<C>> instances){
+		Map<C, Double> proportions = ImpurityProcessors.getProportions(instances);
 		
 		Double totalClassifications = 0D;
 		double maximumClassificationProportion = 0;
-		Enum<?> currentBestClassification = null;
-		for (Entry<Enum<?>, Double> classificationProportion: proportions.entrySet()){
+		C currentBestClassification = null;
+		for (Entry<C, Double> classificationProportion: proportions.entrySet()){
 			totalClassifications += classificationProportion.getValue();
 			if (maximumClassificationProportion < classificationProportion.getValue()){
 				maximumClassificationProportion = classificationProportion.getValue();
 				currentBestClassification = classificationProportion.getKey();
 			}
 		}
-		return new HomogeniousRating(maximumClassificationProportion, currentBestClassification);
+		return new HomogeniousRating<C>(maximumClassificationProportion, currentBestClassification);
 
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })	
-	private FeatureSplits getBestSplit(Iterable<ClassifiedFeatureSet> instances, Iterable<Class<? extends Feature<?>>> featureTypes) {
+	private FeatureSplits<C> getBestSplit(Iterable<ClassifiedFeatureSet<C>> instances, Iterable<Class<? extends Feature<?>>> featureTypes) {
 		double minImpurity = Double.MAX_VALUE;
-		Iterable<Split> bestSplits = null;
+		Iterable<Split<C>> bestSplits = null;
 		Class<? extends Feature<?>> bestFeatureType = null;
 		for (Class<? extends Feature<?>> featureType: featureTypes){
 			// split instances based on feature properties.
 			
-			Iterable<Split> splits;
+			Iterable<Split<C>> splits;
 			if (DiscreteFeature.class.isAssignableFrom(featureType)){
 				splits = splitDiscreteFeature(instances, (Class<? extends DiscreteFeature<?>>) featureType);
 			} else if (ContinuousFeature.class.isAssignableFrom(featureType)){
@@ -189,11 +188,11 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 				bestFeatureType = featureType;
 			}
 		}
-		return new FeatureSplits(bestFeatureType, bestSplits);
+		return new FeatureSplits<C>(bestFeatureType, bestSplits);
 
 	}
 	
-	private Iterable<Split> splitDiscreteFeature(Iterable<ClassifiedFeatureSet> instances, Class<? extends DiscreteFeature<?>> featureType) {
+	private Iterable<Split<C>> splitDiscreteFeature(Iterable<ClassifiedFeatureSet<C>> instances, Class<? extends DiscreteFeature<?>> featureType) {
 		Class<? extends DiscreteFeature<?>> discreteType = (Class<? extends DiscreteFeature<?>>)featureType;
 
 		Collection<? extends Feature<?>> featureValues = Lists.newArrayList(discreteType.getEnumConstants());
@@ -201,20 +200,20 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 		return splitDiscreteFeature(instances, featureType, featureValues);
 	}
 	
-	protected Iterable<Split> splitDiscreteFeature(Iterable<ClassifiedFeatureSet> instances, Class<? extends Feature<?>> featureType, Collection<? extends Feature<?>> allPossibleDiscreteValues){
-		Collection<Split> allSplits = new ArrayList<Split>(allPossibleDiscreteValues.size());
+	protected Iterable<Split<C>> splitDiscreteFeature(Iterable<ClassifiedFeatureSet<C>> instances, Class<? extends Feature<?>> featureType, Collection<? extends Feature<?>> allPossibleDiscreteValues){
+		Collection<Split<C>> allSplits = new ArrayList<Split<C>>(allPossibleDiscreteValues.size());
 		
-		Map<Feature<?>, Collection<ClassifiedFeatureSet>> splits = new HashMap<Feature<?>, Collection<ClassifiedFeatureSet>>();
+		Map<Feature<?>, Collection<ClassifiedFeatureSet<C>>> splits = new HashMap<Feature<?>, Collection<ClassifiedFeatureSet<C>>>();
 		
 		for (Feature<?> feature: allPossibleDiscreteValues){
-			splits.put(feature, new ArrayList<ClassifiedFeatureSet>());
+			splits.put(feature, new ArrayList<ClassifiedFeatureSet<C>>());
 		}
 		
-		for (ClassifiedFeatureSet instance: instances){
+		for (ClassifiedFeatureSet<C> instance: instances){
 			Feature<?> featureValue = instance.getFeature(featureType);
 			
 			if (featureValue == Features.MISSING){ // missing features should get added to all splits.
-				for (Collection<ClassifiedFeatureSet> splitInstances: splits.values()){
+				for (Collection<ClassifiedFeatureSet<C>> splitInstances: splits.values()){
 					splitInstances.add(instance);
 				}
 				
@@ -223,24 +222,24 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 			}
 		}
 		
-		for (Entry<Feature<?>, Collection<ClassifiedFeatureSet>> featureEntry: splits.entrySet()){
-			allSplits.add(new Split(new FeatureDefinition(featureEntry.getKey(), featureType), featureEntry.getValue()));
+		for (Entry<Feature<?>, Collection<ClassifiedFeatureSet<C>>> featureEntry: splits.entrySet()){
+			allSplits.add(new Split<C>(new FeatureDefinition(featureEntry.getKey(), featureType), featureEntry.getValue()));
 		}
 
 		
 		return allSplits;
 	}
 
-	protected <T extends Number & Comparable<T>> Iterable<Split> splitContinuousFeature(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<T>> featureType) {
+	protected <T extends Number & Comparable<T>> Iterable<Split<C>> splitContinuousFeature(Iterable<ClassifiedFeatureSet<C>> instances, Class<? extends ContinuousFeature<T>> featureType) {
 		
 		return continousFeatureSplitter.splitInstances(instances, featureType);
 
 	}
 
-	private int sizeOf(Iterable<Split> splits) {
+	private int sizeOf(Iterable<Split<C>> splits) {
 		int total = 0;
 		
-		for (Split split: splits){
+		for (Split<C> split: splits){
 			total += Iterables.size(split.getInstancesInSplit());
 		}
 		
@@ -248,8 +247,8 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 	}
 
 	@Override
-	public ClassifiedDataset classifyDataset(Dataset<? extends FeatureSet> dataset, Id3Model model) {
-		Map<Identifier, Classification<?>> classifications = new HashMap<Identifier, Classification<?>>();
+	public ClassifiedDataset<C> classifyDataset(Dataset<? extends FeatureSet> dataset, Id3Model<C> model) {
+		Map<Identifier, Classification<C>> classifications = new HashMap<Identifier, Classification<C>>();
 		for (FeatureSet instance: dataset.getInstances()){
 			try{
 				classifications.put(instance.getId(), model.getClassification(instance));
@@ -261,27 +260,27 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 		return ClassifiedDataset.FACTORY.create(dataset, classifications);
 	}
 	
-	private static class HomogeniousRating{
+	private static class HomogeniousRating<C extends Enum<C>>{
 		
 		private final double maximumClassificationSplit;
-		private final Enum<?> mostHomogeniousClassification;
+		private final C mostHomogeniousClassification;
 		
-		private HomogeniousRating(double rating, Enum<?> mostHomogeniousClassification){
+		private HomogeniousRating(double rating, C mostHomogeniousClassification){
 			this.maximumClassificationSplit = rating;
 			this.mostHomogeniousClassification = mostHomogeniousClassification;
 		}
 	}
 	
-	static class Split{
+	static class Split<C extends Enum<C>>{
 		private final FeatureDefinition feature;
-		private final Collection<ClassifiedFeatureSet> instancesInSplit;
+		private final Collection<ClassifiedFeatureSet<C>> instancesInSplit;
 		
-		public Split(FeatureDefinition feature, Collection<ClassifiedFeatureSet> instances){
+		public Split(FeatureDefinition feature, Collection<ClassifiedFeatureSet<C>> instances){
 			this.feature = feature;
 			this.instancesInSplit = instances;
 		}
 
-		public Collection<ClassifiedFeatureSet> getInstancesInSplit() {
+		public Collection<ClassifiedFeatureSet<C>> getInstancesInSplit() {
 			return instancesInSplit;
 		}
 
@@ -295,12 +294,12 @@ public class DecisionTreeModelService implements ModelService<Id3Model>{
 		}
 	}
 	
-	static class FeatureSplits{
+	static class FeatureSplits<C extends Enum<C>>{
 		
 		private final Class<? extends Feature<?>> featureType;
-		private final Iterable<Split> splits;
+		private final Iterable<Split<C>> splits;
 		
-		public FeatureSplits(Class<? extends Feature<?>> featureType, Iterable<Split> splits){
+		public FeatureSplits(Class<? extends Feature<?>> featureType, Iterable<Split<C>> splits){
 			this.featureType = featureType;
 			this.splits = splits;
 		}

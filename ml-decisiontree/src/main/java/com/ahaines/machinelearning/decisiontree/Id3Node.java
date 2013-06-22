@@ -16,12 +16,12 @@ import com.ahaines.machinelearning.api.dataset.FeatureSet;
  * @author andrewhaines
  *
  */
-class Id3Node {
+class Id3Node<C extends Enum<C>> {
 
-	protected final Enum<?> mostCommonClassification;
+	protected final C mostCommonClassification;
 	private final FeatureDefinition feature;
 	
-	public Id3Node(Enum<?> mostCommonClassification, FeatureDefinition feature){
+	public Id3Node(C mostCommonClassification, FeatureDefinition feature){
 		this.mostCommonClassification = mostCommonClassification;
 		if (feature == null){
 			throw new NullPointerException("feature == null");
@@ -33,7 +33,7 @@ class Id3Node {
 		return feature;
 	}
 	
-	Enum<?> getClassification(FeatureSet instance){
+	C getClassification(FeatureSet instance){
 		return mostCommonClassification;
 	}
 	
@@ -65,30 +65,30 @@ class Id3Node {
 	 * @author andrewhaines
 	 *
 	 */
-	static class DecisionId3Node extends Id3Node{
+	static class DecisionId3Node<C extends Enum<C>> extends Id3Node<C>{
 		
-		private final Collection<Id3Node> children;
+		private final Collection<Id3Node<C>> children;
 		private final MissingFeatureClassifier missingFeatureProcessor;
 		
-		DecisionId3Node(Enum<?> mostCommonClassification, FeatureDefinition feature, MissingFeatureClassifier missingFeatureProcessor) {
+		DecisionId3Node(C mostCommonClassification, FeatureDefinition feature, MissingFeatureClassifier missingFeatureProcessor) {
 			super(mostCommonClassification, feature);
-			this.children = new ArrayList<Id3Node>();
+			this.children = new ArrayList<Id3Node<C>>();
 			this.missingFeatureProcessor = missingFeatureProcessor;
 		}
 		
-		void addDecisionNode(Id3Node node){
+		void addDecisionNode(Id3Node<C> node){
 			this.children.add(node);
 		}
 
 		@Override
-		public Enum<?> getClassification(FeatureSet instance) {
+		public C getClassification(FeatureSet instance) {
 			try{
 				Feature<?> featureValue = instance.getFeature(super.getFeature().getFeatureType());
 				if (featureValue == Features.MISSING){
 					missingFeatureProcessor.getClassificationForMissingFeature(instance, this);
 					return super.getClassification(instance); // in the event that we do not have this feature, look at the most common classification at this current node
 				}
-				for (Id3Node child: children){
+				for (Id3Node<C> child: children){
 					if (child.getFeature().intersects(new FeatureDefinition(featureValue, super.getFeature().getFeatureType()))){
 						return child.getClassification(instance);
 					}
@@ -107,7 +107,7 @@ class Id3Node {
 			
 			builder = super.printTree(prefix, isEnd, builder);
 			int i = 0;
-			for(Id3Node child: children){
+			for(Id3Node<C> child: children){
 				i++;
 				
 				if (children.size() >= 1 && i == children.size()) {
@@ -124,14 +124,14 @@ class Id3Node {
 		public int countNodes() {
 			int childrenNodeCount = 0;
 			
-			for (Id3Node child: children){
+			for (Id3Node<C> child: children){
 				childrenNodeCount += child.countNodes();
 			}
 			
 			return super.countNodes() + childrenNodeCount;
 		}
 		
-		Iterable<Id3Node> getChildren(){
+		Iterable<Id3Node<C>> getChildren(){
 			return children;
 		}
 	}

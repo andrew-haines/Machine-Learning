@@ -6,7 +6,7 @@ import com.ahaines.machinelearning.api.dataset.ClassifiedFeatureSet;
 import com.ahaines.machinelearning.api.dataset.Dataset;
 import com.ahaines.machinelearning.api.dataset.FeatureSet;
 
-public interface ModelService<T extends Model> {
+public interface ModelService<T extends Model, C> {
 	
 	public static Utils UTIL = new Utils();
 
@@ -15,7 +15,7 @@ public interface ModelService<T extends Model> {
 	 * @param trainingData
 	 * @return
 	 */
-	T trainModel(ClassifiedDataset trainingData);
+	T trainModel(ClassifiedDataset<C> trainingData);
 	
 	/**
 	 * returns a ClassifiedDataset with classifications for all instances in the supplied dataset against the supplied model.
@@ -23,11 +23,11 @@ public interface ModelService<T extends Model> {
 	 * @param model
 	 * @return
 	 */
-	ClassifiedDataset classifyDataset(Dataset<? extends FeatureSet> dataset, T model);
+	ClassifiedDataset<C> classifyDataset(Dataset<? extends FeatureSet> dataset, T model);
 	
 	static class Utils extends com.ahaines.machinelearning.api.util.Utils{
 
-		public <T extends Model> T getMetrics(ClassifiedDataset trainingSet, ClassifiedDataset expectedTestSet, ModelService<T> modelService, Enum<?> positiveClassification) {
+		public <T extends Model, C> T getMetrics(ClassifiedDataset<C>trainingSet, ClassifiedDataset<C> expectedTestSet, ModelService<T, C> modelService, C positiveClassification) {
 			// calculate distribution
 			long startTime = System.currentTimeMillis();
 			T model = modelService.trainModel(trainingSet);
@@ -37,7 +37,7 @@ public interface ModelService<T extends Model> {
 			// now classify the test set
 			
 			startTime = System.currentTimeMillis();
-			ClassifiedDataset predictedClassifiedSet = modelService.classifyDataset(expectedTestSet, model);
+			ClassifiedDataset<C> predictedClassifiedSet = modelService.classifyDataset(expectedTestSet, model);
 			metrics.timeToClassify = System.currentTimeMillis() - startTime;
 			
 			populateMetrics(predictedClassifiedSet, expectedTestSet, positiveClassification, metrics);
@@ -45,7 +45,7 @@ public interface ModelService<T extends Model> {
 			return model;
 		}
 
-		private void populateMetrics(ClassifiedDataset predictedClassifiedSet, ClassifiedDataset expectedTestSet, Enum<?> positiveClassifcation, Metrics metrics) {
+		private <C> void populateMetrics(ClassifiedDataset<C> predictedClassifiedSet, ClassifiedDataset<C> expectedTestSet, C positiveClassifcation, Metrics metrics) {
 			int numTruePositives = 0;
 			int numTrueNegatives = 0;
 			int positiveCount = 0;
@@ -55,8 +55,8 @@ public interface ModelService<T extends Model> {
 			int numPredictedPositives = 0;
 			int numPredictedNegatives = 0;
 			
-			for (ClassifiedFeatureSet instance: expectedTestSet.getInstances()){
-				ClassifiedFeatureSet predictedInstance = predictedClassifiedSet.getInstance(instance.getId());
+			for (ClassifiedFeatureSet<C> instance: expectedTestSet.getInstances()){
+				ClassifiedFeatureSet<C> predictedInstance = predictedClassifiedSet.getInstance(instance.getId());
 				if (instance.getClassification().getValue().equals(positiveClassifcation)){
 					positiveCount++;
 					if (predictedInstance.getClassification().getValue().equals(positiveClassifcation)){

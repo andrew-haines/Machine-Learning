@@ -16,23 +16,23 @@ import com.google.common.collect.Iterables;
  * @author andrewhaines
  *
  */
-public final class QuantisedDataset implements ClassifiedDataset{
+public final class QuantisedDataset<C> implements ClassifiedDataset<C>{
 
-	private final ClassifiedDataset dataset;
+	private final ClassifiedDataset<C> dataset;
 	private final Map<Class<? extends ContinuousFeature<?>>, Collection<RangeFeature<?>>> quantisedRanges;
 	
-	private QuantisedDataset(ClassifiedDataset dataset, Map<Class<? extends ContinuousFeature<?>>, Collection<RangeFeature<?>>> quantisedRanges){
+	private QuantisedDataset(ClassifiedDataset<C> dataset, Map<Class<? extends ContinuousFeature<?>>, Collection<RangeFeature<?>>> quantisedRanges){
 		this.dataset = dataset;
 		this.quantisedRanges = quantisedRanges;
 	}
 	
 	@Override
-	public ClassifiedFeatureSet getInstance(Identifier instanceId) {
+	public ClassifiedFeatureSet<C> getInstance(Identifier instanceId) {
 		return dataset.getInstance(instanceId);
 	}
 
 	@Override
-	public Iterable<ClassifiedFeatureSet> getInstances() {
+	public Iterable<ClassifiedFeatureSet<C>> getInstances() {
 		return dataset.getInstances();
 	}
 
@@ -46,12 +46,11 @@ public final class QuantisedDataset implements ClassifiedDataset{
 	}
 	
 	@Override
-	public Map<Identifier, ? extends Classification<?>> getClassifications() {
+	public Map<Identifier, ? extends Classification<C>> getClassifications() {
 		return dataset.getClassifications();
 	}
 	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static QuantisedDataset discretise(ClassifiedDataset dataset, ContinuousFeatureQuantiser quantiser){
+	public static <C extends Enum<C>> QuantisedDataset<C> discretise(ClassifiedDataset<C> dataset, ContinuousFeatureQuantiser quantiser){
 		
 		FeatureSet.FeatureSetFactory instanceFactory = new FeatureSet.FeatureSetFactory(dataset.getFeatureTypes());
 		final Map<Identifier, Map<Class<? extends Feature<?>>, RangeFeature<?>>> ranges = new HashMap<Identifier, Map<Class<? extends Feature<?>>, RangeFeature<?>>>();
@@ -65,16 +64,15 @@ public final class QuantisedDataset implements ClassifiedDataset{
 				Collection<RangeFeature<?>> allFeatureRanges = quantiser.quantise(dataset.getInstances(), (Class)featureType, new QuantiserEventProcessor(){
 
 					@Override
-					public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> range, Iterable<ClassifiedFeatureSet> instanceInSplit) {
-						for (ClassifiedFeatureSet instance: instanceInSplit){
+					public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> range, Iterable<? extends ClassifiedFeatureSet<? extends Enum<?>>> instanceInSplit) {
+						for (ClassifiedFeatureSet<? extends Enum<?>> instance: instanceInSplit){
 							
 							Map<Class<? extends Feature<?>>, RangeFeature<?>> rangeValues = ranges.get(instance.getId());
 							
 							if (rangeValues == null){
 								rangeValues = new HashMap<Class<? extends Feature<?>>, RangeFeature<?>>();
 							}
-							RangeFeature<?> oldFeature = null;
-							if ((oldFeature = rangeValues.put(featureType, range)) != null){
+							if (rangeValues.put(featureType, range) != null){
 								throw new IllegalStateException("There should not have been a feature range already assigned for type: "+featureType.getSimpleName());
 							}
 							
@@ -90,9 +88,9 @@ public final class QuantisedDataset implements ClassifiedDataset{
 		// now re add instances replacing continuous values with their computed ranges
 		
 		Dataset.DatasetBuilder builder = new Dataset.DatasetBuilder(dataset.getFeatureTypes());
-		Map<Identifier, ? extends Classification<?>> classifications = dataset.getClassifications();
+		Map<Identifier, ? extends Classification<C>> classifications = dataset.getClassifications();
 		
-		for (ClassifiedFeatureSet instance: dataset.getInstances()){
+		for (ClassifiedFeatureSet<C> instance: dataset.getInstances()){
 			List<FeatureDefinition> features = new ArrayList<FeatureDefinition>(featureSetSize);
 			
 			Map<Class<? extends Feature<?>>, RangeFeature<?>> discretisedFeatures = ranges.get(instance.getId());
@@ -113,6 +111,6 @@ public final class QuantisedDataset implements ClassifiedDataset{
 			builder.addInstance(instanceFactory.createFeatureSet(instance.getId(), features));
 		}
 	
-		return new QuantisedDataset(ClassifiedDataset.FACTORY.create(builder.build(), classifications), quantisedRanges);
+		return new QuantisedDataset<C>(ClassifiedDataset.FACTORY.create(builder.build(), classifications), quantisedRanges);
 	}
 }

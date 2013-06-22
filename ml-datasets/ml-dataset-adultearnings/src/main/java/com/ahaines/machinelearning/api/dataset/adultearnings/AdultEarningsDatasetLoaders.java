@@ -47,23 +47,23 @@ public final class AdultEarningsDatasetLoaders{
 	private AdultEarningsDatasetLoaders(){
 	}
 
-	public static ClassifiedDatasetLoader getTrainingDatasetLoader() throws IOException{
+	public static ClassifiedDatasetLoader<AdultEarningsClassificationType> getTrainingDatasetLoader() throws IOException{
 		return getTrainingDatasetLoader(TRAINING_DATASET);
 	}
 	
-	public static ClassifiedDatasetLoader getTestDatasetLoader() throws IOException{
+	public static ClassifiedDatasetLoader<AdultEarningsClassificationType> getTestDatasetLoader() throws IOException{
 		return getTrainingDatasetLoader(TEST_DATASET);
 	}
 	
-	public static ClassifiedDatasetLoader getTrainingDatasetLoader(String location) throws IOException {
+	public static ClassifiedDatasetLoader<AdultEarningsClassificationType> getTrainingDatasetLoader(String location) throws IOException {
 		URL fileLocation = AdultEarningsDatasetLoaders.class.getResource(location);
 		LOG.debug("loading dataset: "+fileLocation);
 		try{
-			final ClassifiedDataset dataset = loadDataset(fileLocation.toURI(), true);
-			return new ClassifiedDatasetLoader(){
+			final ClassifiedDataset<AdultEarningsClassificationType> dataset = loadDataset(fileLocation.toURI(), true);
+			return new ClassifiedDatasetLoader<AdultEarningsClassificationType>(){
 
 				@Override
-				public ClassifiedDataset getClassifiedDataset() {
+				public ClassifiedDataset<AdultEarningsClassificationType> getClassifiedDataset() {
 					return dataset;
 				}
 				
@@ -74,7 +74,7 @@ public final class AdultEarningsDatasetLoaders{
 		
 	}
 
-	private static ClassifiedDataset loadDataset(final URI uri, boolean includeMissingFeatures) throws IOException {
+	private static ClassifiedDataset<AdultEarningsClassificationType> loadDataset(final URI uri, boolean includeMissingFeatures) throws IOException {
 		Path path;
 		try{
 			path = Paths.get(uri);

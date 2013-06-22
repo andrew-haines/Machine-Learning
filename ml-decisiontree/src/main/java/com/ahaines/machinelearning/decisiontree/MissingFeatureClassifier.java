@@ -15,7 +15,7 @@ public interface MissingFeatureClassifier{
 	
 	public static MissingFeatureClassifiers CLASSIFIERS = new MissingFeatureClassifiers();
 	
-	Enum<?> getClassificationForMissingFeature(FeatureSet instance, DecisionId3Node decisionId3Node);
+	<C extends Enum<C>> C getClassificationForMissingFeature(FeatureSet instance, DecisionId3Node<C> decisionId3Node);
 	
 	public static class MissingFeatureClassifiers{
 		
@@ -28,7 +28,7 @@ public interface MissingFeatureClassifier{
 			return new MissingFeatureClassifier(){
 
 				@Override
-				public Enum<?> getClassificationForMissingFeature(FeatureSet instance, DecisionId3Node decisionId3Node) {
+				public <C extends Enum<C>> C getClassificationForMissingFeature(FeatureSet instance, DecisionId3Node<C> decisionId3Node) {
 					return decisionId3Node.mostCommonClassification;
 				}
 				
@@ -43,12 +43,12 @@ public interface MissingFeatureClassifier{
 			return new MissingFeatureClassifier(){
 
 				@Override
-				public Enum<?> getClassificationForMissingFeature(FeatureSet instance, DecisionId3Node decisionId3Node) {
-					Map<Enum<?>, Integer> classificationCounts = new HashMap<Enum<?>, Integer>();
-					Enum<?> maximiumVotedClassification = decisionId3Node.mostCommonClassification;
+				public <C extends Enum<C>>C getClassificationForMissingFeature(FeatureSet instance, DecisionId3Node<C> decisionId3Node) {
+					Map<C, Integer> classificationCounts = new HashMap<C, Integer>();
+					C maximiumVotedClassification = decisionId3Node.mostCommonClassification;
 					int highestVote = 0;
-					for (Id3Node child: decisionId3Node.getChildren()){
-						Enum<?> childClassification = child.getClassification(instance);
+					for (Id3Node<C> child: decisionId3Node.getChildren()){
+						C childClassification = child.getClassification(instance);
 						Integer previousRating = classificationCounts.get(childClassification);
 						
 						if (previousRating == null){

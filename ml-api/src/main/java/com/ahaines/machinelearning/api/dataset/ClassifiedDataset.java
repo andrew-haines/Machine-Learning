@@ -13,31 +13,31 @@ import com.google.common.collect.Iterables;
  * @author andrewhaines
  *
  */
-public interface ClassifiedDataset extends Dataset<ClassifiedFeatureSet>{
+public interface ClassifiedDataset<C> extends Dataset<ClassifiedFeatureSet<C>>{
 	
 	public static final ClassifiedDatasetFactory FACTORY = new ClassifiedDatasetFactory();
 	
-	public Map<Identifier, ? extends Classification<?>> getClassifications();
+	public Map<Identifier, ? extends Classification<C>> getClassifications();
 	
-	public static class ClassifiedDatasetImpl implements ClassifiedDataset{
+	public static class ClassifiedDatasetImpl<C> implements ClassifiedDataset<C>{
 		
 		protected final Dataset<? extends FeatureSet> dataset;
-		protected final Map<Identifier, ? extends Classification<?>> classifications;
-		private final Iterable<ClassifiedFeatureSet> instances;
+		protected final Map<Identifier, ? extends Classification<C>> classifications;
+		private final Iterable<ClassifiedFeatureSet<C>> instances;
 		
-		protected ClassifiedDatasetImpl(Dataset<? extends FeatureSet> dataset, final Map<Identifier, ? extends Classification<?>> classifications){
+		protected ClassifiedDatasetImpl(Dataset<? extends FeatureSet> dataset, final Map<Identifier, ? extends Classification<C>> classifications){
 			this.dataset = dataset;
 			this.classifications = classifications;
 			
 			final Iterable<? extends FeatureSet> dataInstances = dataset.getInstances();
 			
-			instances = new CachedIterable<ClassifiedFeatureSet>(new Iterable<ClassifiedFeatureSet>(){
+			instances = new CachedIterable<ClassifiedFeatureSet<C>>(new Iterable<ClassifiedFeatureSet<C>>(){
 
 				@Override
-				public Iterator<ClassifiedFeatureSet> iterator() {
+				public Iterator<ClassifiedFeatureSet<C>> iterator() {
 					final Iterator<? extends FeatureSet> it = dataInstances.iterator();
 					
-					return new Iterator<ClassifiedFeatureSet>(){
+					return new Iterator<ClassifiedFeatureSet<C>>(){
 
 						@Override
 						public boolean hasNext() {
@@ -45,9 +45,9 @@ public interface ClassifiedDataset extends Dataset<ClassifiedFeatureSet>{
 						}
 
 						@Override
-						public ClassifiedFeatureSet next() {
+						public ClassifiedFeatureSet<C> next() {
 							FeatureSet featureSet = it.next();
-							return new ClassifiedFeatureSet(featureSet, classifications.get(featureSet.getId()));
+							return new ClassifiedFeatureSet<C>(featureSet, classifications.get(featureSet.getId()));
 						}
 
 						@Override
@@ -61,18 +61,18 @@ public interface ClassifiedDataset extends Dataset<ClassifiedFeatureSet>{
 			});
 		}
 		
-		public ClassifiedFeatureSet getInstance(Identifier instanceId){
+		public ClassifiedFeatureSet<C> getInstance(Identifier instanceId){
 			FeatureSet instance = dataset.getInstance(instanceId);
 			
-			Classification<?> classification = classifications.get(instanceId);
+			Classification<C> classification = classifications.get(instanceId);
 			
-			return new ClassifiedFeatureSet(instance, classification);
+			return new ClassifiedFeatureSet<C>(instance, classification);
 		}
 		
 		public String toString(){
 			
 			StringBuilder builder = new StringBuilder();
-			for (ClassifiedFeatureSet instance: getInstances()){
+			for (ClassifiedFeatureSet<C> instance: getInstances()){
 				builder.append(instance);
 				builder.append("\n");
 			}
@@ -85,34 +85,33 @@ public interface ClassifiedDataset extends Dataset<ClassifiedFeatureSet>{
 		}
 		
 		@Override
-		public Iterable<ClassifiedFeatureSet> getInstances(){
+		public Iterable<ClassifiedFeatureSet<C>> getInstances(){
 			return instances;
 		}
 
 		@Override
-		public Map<Identifier, ? extends Classification<?>> getClassifications() {
+		public Map<Identifier, ? extends Classification<C>> getClassifications() {
 			return classifications;
 		}
 	}
 	
 	public static class ClassifiedDatasetFactory {
 		
-		public ClassifiedDataset create(Dataset<? extends FeatureSet> dataset, Iterable<? extends Classification<?>> classifications){
+		public <C> ClassifiedDataset<C> create(Dataset<? extends FeatureSet> dataset, Iterable<? extends Classification<C>> classifications){
 			
 			return create(dataset, Identifiable.UTIL.index(classifications));
 		}
 		
-		public ClassifiedDataset create(Dataset<? extends FeatureSet> dataset, Map<Identifier, ? extends Classification<?>> classifications){
+		public <C> ClassifiedDataset<C> create(Dataset<? extends FeatureSet> dataset, Map<Identifier, ? extends Classification<C>> classifications){
 			
-			return new ClassifiedDatasetImpl(dataset, classifications);
+			return new ClassifiedDatasetImpl<C>(dataset, classifications);
 		}
 		
-		public Iterable<ClassifiedFeatureSet> filterFeatureSet(Iterable<ClassifiedFeatureSet> instances, final FeatureDefinition feature){
-			return Iterables.filter(instances, new Predicate<ClassifiedFeatureSet>(){
+		public <C> Iterable<ClassifiedFeatureSet<C>> filterFeatureSet(Iterable<ClassifiedFeatureSet<C>> instances, final FeatureDefinition feature){
+			return Iterables.filter(instances, new Predicate<ClassifiedFeatureSet<C>>(){
 				
-				@SuppressWarnings({ "rawtypes"})
 				@Override
-				public boolean apply(ClassifiedFeatureSet input){
+				public boolean apply(ClassifiedFeatureSet<C> input){
 					
 					Feature<?> instanceFeatureValue = input.getFeature(feature.getFeatureType());
 					
@@ -121,7 +120,7 @@ public interface ClassifiedDataset extends Dataset<ClassifiedFeatureSet>{
 						
 						return true;
 					}
-					return instanceFeatureValue.equals((Feature)feature.getFeature());
+					return instanceFeatureValue.equals((Feature<?>)feature.getFeature());
 				}
 			});
 		}

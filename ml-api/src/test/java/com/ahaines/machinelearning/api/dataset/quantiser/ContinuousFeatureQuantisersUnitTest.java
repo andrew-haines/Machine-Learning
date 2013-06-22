@@ -27,9 +27,9 @@ import static org.hamcrest.CoreMatchers.equalTo;
 public class ContinuousFeatureQuantisersUnitTest {
 
 	private static final FeatureSet.FeatureSetFactory FACTORY = new FeatureSet.FeatureSetFactory(Features.ALL_FEATURE_TYPES);
-	private final static Iterable<ClassifiedFeatureSet> TEST_INSTANCES = getTestInstances();
-	private final static Iterable<ClassifiedFeatureSet> TEST_INSTANCES_DUPLICATES = getTestContinuousDuplicateInstances();
-	private final static Iterable<ClassifiedFeatureSet> TEST_INSTANCES_ALL_SAME = getTestSameDuplicateInstances();
+	private final static Iterable<ClassifiedFeatureSet<EmailClassification>> TEST_INSTANCES = getTestInstances();
+	private final static Iterable<ClassifiedFeatureSet<EmailClassification>> TEST_INSTANCES_DUPLICATES = getTestContinuousDuplicateInstances();
+	private final static Iterable<ClassifiedFeatureSet<EmailClassification>> TEST_INSTANCES_ALL_SAME = getTestSameDuplicateInstances();
 	
 	private ContinuousFeatureQuantiser averageQuantiserCandidate;
 	private ContinuousFeatureQuantiser clusterQuantiserCandidate;
@@ -47,14 +47,14 @@ public class ContinuousFeatureQuantisersUnitTest {
 	public void givenAverageFeatureQuantiser_whenCallingQuantise_then2CallbacksInstantiatedAroundAveragePoint(){
 		
 		final List<RangeFeature<? extends Number>> ranges = new ArrayList<RangeFeature<? extends Number>>();
-		final List<Iterable<ClassifiedFeatureSet>> instances = new ArrayList<Iterable<ClassifiedFeatureSet>>();
+		final List<Iterable<ClassifiedFeatureSet<EmailClassification>>> instances = new ArrayList<Iterable<ClassifiedFeatureSet<EmailClassification>>>();
 		
 		averageQuantiserCandidate.quantise(TEST_INSTANCES, Email.Features.HoursIgnoredFeature.class, new QuantiserEventProcessor(){
 
 			@Override
-			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<ClassifiedFeatureSet> instanceInSplit) {
+			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<? extends ClassifiedFeatureSet<? extends Enum<?>>> instanceInSplit) {
 				ranges.add(newRange);
-				instances.add(instanceInSplit);
+				instances.add((Iterable)instanceInSplit);
 			}
 		});
 		
@@ -79,8 +79,8 @@ public class ContinuousFeatureQuantisersUnitTest {
 		assertThat(((RangeFeature<Integer>)ranges.get(1)).intersects(new Features.HoursIgnoredFeature(Integer.MAX_VALUE)), is(equalTo(true)));
 	}
 
-	private static Iterable<ClassifiedFeatureSet> getTestInstances() {
-		List<ClassifiedFeatureSet> instances = new ArrayList<ClassifiedFeatureSet>();
+	private static Iterable<ClassifiedFeatureSet<EmailClassification>> getTestInstances() {
+		List<ClassifiedFeatureSet<EmailClassification>> instances = new ArrayList<ClassifiedFeatureSet<EmailClassification>>();
 		instances.add(createClassifiedInstance(1, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.HAM));
 		instances.add(createClassifiedInstance(2, Contains.PRESENT, Contains.ABSENT, 30, EmailClassification.SPAM));
 		instances.add(createClassifiedInstance(3, Contains.PRESENT, Contains.ABSENT, 26, EmailClassification.HAM));
@@ -101,8 +101,8 @@ public class ContinuousFeatureQuantisersUnitTest {
 		return instances;
 	}
 	
-	private static Iterable<ClassifiedFeatureSet> getTestContinuousDuplicateInstances() {
-		List<ClassifiedFeatureSet> instances = new ArrayList<ClassifiedFeatureSet>();
+	private static Iterable<ClassifiedFeatureSet<EmailClassification>> getTestContinuousDuplicateInstances() {
+		List<ClassifiedFeatureSet<EmailClassification>> instances = new ArrayList<ClassifiedFeatureSet<EmailClassification>>();
 		instances.add(createClassifiedInstance(1, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.HAM));
 		instances.add(createClassifiedInstance(2, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.SPAM));
 		instances.add(createClassifiedInstance(3, Contains.PRESENT, Contains.ABSENT, 50, EmailClassification.HAM));
@@ -125,8 +125,8 @@ public class ContinuousFeatureQuantisersUnitTest {
 		return instances;
 	}
 	
-	private static Iterable<ClassifiedFeatureSet> getTestSameDuplicateInstances() {
-		List<ClassifiedFeatureSet> instances = new ArrayList<ClassifiedFeatureSet>();
+	private static Iterable<ClassifiedFeatureSet<EmailClassification>> getTestSameDuplicateInstances() {
+		List<ClassifiedFeatureSet<EmailClassification>> instances = new ArrayList<ClassifiedFeatureSet<EmailClassification>>();
 		instances.add(createClassifiedInstance(1, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.HAM));
 		instances.add(createClassifiedInstance(2, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.HAM));
 		instances.add(createClassifiedInstance(3, Contains.PRESENT, Contains.ABSENT, 100, EmailClassification.HAM));
@@ -142,14 +142,14 @@ public class ContinuousFeatureQuantisersUnitTest {
 	@Test
 	public void givenClusterFeatureQuantiser_whenCallingQuantise_then2CallbacksInstantiatedAroundAveragePoint(){
 		final List<RangeFeature<? extends Number>> ranges = new ArrayList<RangeFeature<? extends Number>>();
-		final List<Iterable<ClassifiedFeatureSet>> instances = new ArrayList<Iterable<ClassifiedFeatureSet>>();
+		final List<Iterable<ClassifiedFeatureSet<EmailClassification>>> instances = new ArrayList<Iterable<ClassifiedFeatureSet<EmailClassification>>>();
 		
 		clusterQuantiserCandidate.quantise(TEST_INSTANCES, Email.Features.HoursIgnoredFeature.class, new QuantiserEventProcessor(){
 
 			@Override
-			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<ClassifiedFeatureSet> instanceInSplit) {
+			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<? extends ClassifiedFeatureSet<? extends Enum<?>>> instanceInSplit) {
 				ranges.add(newRange);
-				instances.add(instanceInSplit);
+				instances.add((Iterable)instanceInSplit);
 			}
 		});
 		
@@ -233,15 +233,16 @@ public class ContinuousFeatureQuantisersUnitTest {
 	@Test
 	public void givenConstantBucketQuantiser_whenCallingQuantise_thenExpectedCallbacksInvokedSplitOccurs(){
 		final List<RangeFeature<? extends Number>> ranges = new ArrayList<RangeFeature<? extends Number>>();
-		final List<Iterable<ClassifiedFeatureSet>> instances = new ArrayList<Iterable<ClassifiedFeatureSet>>();
+		final List<Iterable<ClassifiedFeatureSet<EmailClassification>>> instances = new ArrayList<Iterable<ClassifiedFeatureSet<EmailClassification>>>();
 		
 		constantBucketCandidate.quantise(TEST_INSTANCES, Email.Features.HoursIgnoredFeature.class, new QuantiserEventProcessor(){
 
+			@SuppressWarnings("rawtypes")
 			@Override
-			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<ClassifiedFeatureSet> instancesInSplit) {
+			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<? extends ClassifiedFeatureSet<? extends Enum<?>>> instancesInSplit) {
 				ranges.add(newRange);
 				System.out.println(newRange);
-				instances.add(instancesInSplit);
+				instances.add((Iterable)instancesInSplit);
 			}
 		});
 		
@@ -306,17 +307,17 @@ public class ContinuousFeatureQuantisersUnitTest {
 	@Test
 	public void givenConstantBucketQuantiser_whenCallingQuantiseWith2Buckets_thenExpectedCallbacksInvokedSplitOccurs(){
 		final List<RangeFeature<? extends Number>> ranges = new ArrayList<RangeFeature<? extends Number>>();
-		final List<Iterable<ClassifiedFeatureSet>> instances = new ArrayList<Iterable<ClassifiedFeatureSet>>();
+		final List<Iterable<ClassifiedFeatureSet<EmailClassification>>> instances = new ArrayList<Iterable<ClassifiedFeatureSet<EmailClassification>>>();
 		
 		constantBucketCandidate = ContinuousFeatureQuantisers.getConstantBucketQuantiser(2);
 		
 		constantBucketCandidate.quantise(TEST_INSTANCES, Email.Features.HoursIgnoredFeature.class, new QuantiserEventProcessor(){
 
 			@Override
-			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<ClassifiedFeatureSet> instanceInSplit) {
+			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<? extends ClassifiedFeatureSet<? extends Enum<?>>> instanceInSplit) {
 				ranges.add(newRange);
 				System.out.println(newRange);
-				instances.add(instanceInSplit);
+				instances.add((Iterable)instanceInSplit);
 			}
 		});
 		
@@ -368,15 +369,15 @@ public class ContinuousFeatureQuantisersUnitTest {
 	@Test
 	public void givenConstantBucketQuantiser_whenCallingQuantiseWith10BucketsAndDuplicateValuesInTestSet_thenExpectedCallbacksInvokedSplitOccurs(){
 		final List<RangeFeature<? extends Number>> ranges = new ArrayList<RangeFeature<? extends Number>>();
-		final List<Iterable<ClassifiedFeatureSet>> instances = new ArrayList<Iterable<ClassifiedFeatureSet>>();
+		final List<Iterable<ClassifiedFeatureSet<EmailClassification>>> instances = new ArrayList<Iterable<ClassifiedFeatureSet<EmailClassification>>>();
 		
 		constantBucketCandidate.quantise(TEST_INSTANCES_DUPLICATES, Email.Features.HoursIgnoredFeature.class, new QuantiserEventProcessor(){
 
 			@Override
-			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<ClassifiedFeatureSet> instanceInSplit) {
+			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<? extends ClassifiedFeatureSet<? extends Enum<?>>> instanceInSplit) {
 				ranges.add(newRange);
 				System.out.println(newRange);
-				instances.add(instanceInSplit);
+				instances.add((Iterable)instanceInSplit);
 			}
 		});
 		
@@ -430,15 +431,15 @@ public class ContinuousFeatureQuantisersUnitTest {
 	@Test
 	public void givenConstantBucketQuantiser_whenCallingQuantiseWith10BucketsAndAllSameValuesInTestSet_thenExpectedCallbacksInvokedSplitOccurs(){
 		final List<RangeFeature<? extends Number>> ranges = new ArrayList<RangeFeature<? extends Number>>();
-		final List<Iterable<ClassifiedFeatureSet>> instances = new ArrayList<Iterable<ClassifiedFeatureSet>>();
+		final List<Iterable<ClassifiedFeatureSet<EmailClassification>>> instances = new ArrayList<Iterable<ClassifiedFeatureSet<EmailClassification>>>();
 		
 		constantBucketCandidate.quantise(TEST_INSTANCES_ALL_SAME, Email.Features.HoursIgnoredFeature.class, new QuantiserEventProcessor(){
 
 			@Override
-			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<ClassifiedFeatureSet> instanceInSplit) {
+			public <T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> newRange,	Iterable<? extends ClassifiedFeatureSet<? extends Enum<?>>> instanceInSplit) {
 				ranges.add(newRange);
 				System.out.println(newRange);
-				instances.add(instanceInSplit);
+				instances.add((Iterable)instanceInSplit);
 			}
 		});
 		
@@ -460,8 +461,8 @@ public class ContinuousFeatureQuantisersUnitTest {
 		assertThat(Iterables.get(instances.get(0), 6).getId(), is(equalTo(Identifier.FACTORY.createIdentifier(7))));
 	}
 	
-	private static ClassifiedFeatureSet createClassifiedInstance(int id, Contains viagra, Contains enlargment, int hoursIgnored, EmailClassification classification){
-		return new ClassifiedFeatureSet(createInstance(id, viagra, enlargment, hoursIgnored), new Classification<EmailClassification>(Identifier.FACTORY.createIdentifier(id), classification));
+	private static ClassifiedFeatureSet<EmailClassification> createClassifiedInstance(int id, Contains viagra, Contains enlargment, int hoursIgnored, EmailClassification classification){
+		return new ClassifiedFeatureSet<EmailClassification>(createInstance(id, viagra, enlargment, hoursIgnored), new Classification<EmailClassification>(Identifier.FACTORY.createIdentifier(id), classification));
 	}
 	
 	private static FeatureSet createInstance(int id, Contains viagra, Contains enlargment, int hoursIgnored) {

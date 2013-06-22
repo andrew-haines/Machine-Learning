@@ -5,11 +5,11 @@ package com.ahaines.machinelearning.api.dataset;
  * @author andrewhaines
  *
  */
-public class ClassifiedFeatureSet implements FeatureSet{
+public class ClassifiedFeatureSet<C> implements FeatureSet{
 	private final FeatureSet instance;
-	private final Classification<?> classification;
+	private final Classification<C> classification;
 	
-	public ClassifiedFeatureSet(FeatureSet instance, Classification<?> classification){
+	public ClassifiedFeatureSet(FeatureSet instance, Classification<C> classification){
 		if (instance == null || classification == null){
 			throw new NullPointerException("instance: "+instance+" classification: "+classification);
 		}
@@ -17,7 +17,7 @@ public class ClassifiedFeatureSet implements FeatureSet{
 		this.classification = classification;
 	}
 
-	public Classification<?> getClassification() {
+	public Classification<C> getClassification() {
 		return classification;
 	}
 	

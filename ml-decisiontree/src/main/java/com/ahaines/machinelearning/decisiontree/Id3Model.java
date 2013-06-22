@@ -4,19 +4,18 @@ import com.ahaines.machinelearning.api.Model;
 import com.ahaines.machinelearning.api.dataset.Classification;
 import com.ahaines.machinelearning.api.dataset.FeatureSet;
 
-public class Id3Model implements Model{
+public class Id3Model<C extends Enum<C>> implements Model{
 
-	private final Id3Node root;
+	private final Id3Node<C> root;
 	private final Metrics metrics;
 	
-	public Id3Model(Id3Node root){
+	public Id3Model(Id3Node<C> root){
 		this.root = root;
 		this.metrics = new Id3Metrics(root.countNodes());
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public Classification<?> getClassification(FeatureSet instance) {
-		return new Classification(instance.getId(), root.getClassification(instance));
+	public Classification<C> getClassification(FeatureSet instance) {
+		return new Classification<C>(instance.getId(), root.getClassification(instance));
 	}
 	
 	public String toString(){

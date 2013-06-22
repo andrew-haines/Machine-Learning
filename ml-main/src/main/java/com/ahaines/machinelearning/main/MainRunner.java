@@ -19,6 +19,7 @@ import com.ahaines.machinelearning.api.ModelService;
 import com.ahaines.machinelearning.api.dataset.ClassifiedDataset;
 import com.ahaines.machinelearning.api.dataset.ClassifiedDatasetLoader;
 import com.ahaines.machinelearning.api.dataset.adultearnings.AdultEarningsClassification;
+import com.ahaines.machinelearning.api.dataset.adultearnings.AdultEarningsClassificationType;
 import com.ahaines.machinelearning.api.dataset.adultearnings.AdultEarningsDatasetLoaders;
 import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantiser;
 import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantisers;
@@ -71,8 +72,8 @@ public class MainRunner {
 		
 		setupLogger();
 		
-		ClassifiedDatasetLoader trainingLoader = AdultEarningsDatasetLoaders.getTrainingDatasetLoader();
-		ClassifiedDatasetLoader testLoader = AdultEarningsDatasetLoaders.getTestDatasetLoader();
+		ClassifiedDatasetLoader<AdultEarningsClassificationType> trainingLoader = AdultEarningsDatasetLoaders.getTrainingDatasetLoader();
+		ClassifiedDatasetLoader<AdultEarningsClassificationType> testLoader = AdultEarningsDatasetLoaders.getTestDatasetLoader();
 		
 		ContinuousFeatureQuantiser cluster = ContinuousFeatureQuantisers.getClusteredQuantiser();
 		ContinuousFeatureQuantiser average = ContinuousFeatureQuantisers.getAveragePivotQuantiser();
@@ -170,7 +171,7 @@ public class MainRunner {
 	     }
 	}
 	//0.3311
-	private static void performContinuousDecisionTreeRuns(ClassifiedDatasetLoader trainingLoader, ClassifiedDatasetLoader testLoader, ImpurityProcessor processor, MissingFeatureClassifier missingFeatureClassifier, ContinuousFeatureQuantiser continuousFeatureQuantiser) throws IOException{
+	private static void performContinuousDecisionTreeRuns(ClassifiedDatasetLoader<AdultEarningsClassificationType> trainingLoader, ClassifiedDatasetLoader<AdultEarningsClassificationType> testLoader, ImpurityProcessor processor, MissingFeatureClassifier missingFeatureClassifier, ContinuousFeatureQuantiser continuousFeatureQuantiser) throws IOException{
 		double homogeniousThreshold = 1;
 		
 		StringBuilder builder = new StringBuilder();
@@ -188,7 +189,7 @@ public class MainRunner {
 		LOG.info(builder.toString());
 	}
 	
-	private static void performPreQuantisedDecisionTreeRuns(ClassifiedDatasetLoader trainingLoader, ClassifiedDatasetLoader testLoader, ImpurityProcessor processor, MissingFeatureClassifier missingFeatureClassifier, ContinuousFeatureQuantiser continuousFeatureQuantiser) throws IOException{
+	private static void performPreQuantisedDecisionTreeRuns(ClassifiedDatasetLoader<AdultEarningsClassificationType> trainingLoader, ClassifiedDatasetLoader<AdultEarningsClassificationType> testLoader, ImpurityProcessor processor, MissingFeatureClassifier missingFeatureClassifier, ContinuousFeatureQuantiser continuousFeatureQuantiser) throws IOException{
 		double homogeniousThreshold = 1;
 		
 		StringBuilder builder = new StringBuilder();
@@ -206,24 +207,24 @@ public class MainRunner {
 		LOG.info(builder.toString());
 	}
 	
-	private static Metrics performRun(ClassifiedDatasetLoader trainingLoader, ClassifiedDatasetLoader testLoader, double homogeniousThreshold, ImpurityProcessor processor, MissingFeatureClassifier missingFeatureClassifier, ContinuousFeatureQuantiser continuousFeatureQuantiser) throws IOException{
-		ModelService<Id3Model> service = new DecisionTreeModelService(processor, continuousFeatureQuantiser, homogeniousThreshold, missingFeatureClassifier);
+	private static Metrics performRun(ClassifiedDatasetLoader<AdultEarningsClassificationType> trainingLoader, ClassifiedDatasetLoader<AdultEarningsClassificationType> testLoader, double homogeniousThreshold, ImpurityProcessor processor, MissingFeatureClassifier missingFeatureClassifier, ContinuousFeatureQuantiser continuousFeatureQuantiser) throws IOException{
+		ModelService<Id3Model<AdultEarningsClassificationType>, AdultEarningsClassificationType> service = new DecisionTreeModelService<AdultEarningsClassificationType>(processor, continuousFeatureQuantiser, homogeniousThreshold, missingFeatureClassifier);
 		
 		return performRun(trainingLoader, testLoader, service);
 	}
 	
-	private static Metrics performQuantisedRun(ClassifiedDatasetLoader trainingLoader, ClassifiedDatasetLoader testLoader, double homogeniousThreshold, ImpurityProcessor processor, MissingFeatureClassifier missingFeatureClassifier, ContinuousFeatureQuantiser continuousFeatureQuantiser) throws IOException{
-		ModelService<Id3Model> service = new QuantisedDecisionTreeModelService(processor, continuousFeatureQuantiser, homogeniousThreshold, missingFeatureClassifier);
+	private static Metrics performQuantisedRun(ClassifiedDatasetLoader<AdultEarningsClassificationType> trainingLoader, ClassifiedDatasetLoader<AdultEarningsClassificationType> testLoader, double homogeniousThreshold, ImpurityProcessor processor, MissingFeatureClassifier missingFeatureClassifier, ContinuousFeatureQuantiser continuousFeatureQuantiser) throws IOException{
+		ModelService<Id3Model<AdultEarningsClassificationType>, AdultEarningsClassificationType> service = new QuantisedDecisionTreeModelService<AdultEarningsClassificationType>(processor, continuousFeatureQuantiser, homogeniousThreshold, missingFeatureClassifier);
 		
 		return performRun(trainingLoader, testLoader, service);
 	}
 	
 	
-	private static <T extends Model> Metrics performRun(ClassifiedDatasetLoader trainingLoader, ClassifiedDatasetLoader testLoader, ModelService<T> modelService) throws IOException{
+	private static <T extends Model> Metrics performRun(ClassifiedDatasetLoader<AdultEarningsClassificationType> trainingLoader, ClassifiedDatasetLoader<AdultEarningsClassificationType> testLoader, ModelService<T, AdultEarningsClassificationType> modelService) throws IOException{
 		try{
-			ClassifiedDataset trainingDataset = trainingLoader.getClassifiedDataset();
+			ClassifiedDataset<AdultEarningsClassificationType> trainingDataset = trainingLoader.getClassifiedDataset();
 	
-			ClassifiedDataset testDataset = testLoader.getClassifiedDataset();
+			ClassifiedDataset<AdultEarningsClassificationType> testDataset = testLoader.getClassifiedDataset();
 	
 			Model model = ModelService.UTIL.getMetrics(trainingDataset, testDataset, modelService, AdultEarningsClassification.getLessThen50K());
 			return model.getMetrics();
@@ -232,7 +233,7 @@ public class MainRunner {
 		}
 	}
 	
-	private static void performNaiveBayesRun(ClassifiedDatasetLoader trainingLoader, ClassifiedDatasetLoader testLoader, ContinuousFeatureQuantiser continuousFeatureQuantiser) throws IOException{
+	private static void performNaiveBayesRun(ClassifiedDatasetLoader<AdultEarningsClassificationType> trainingLoader, ClassifiedDatasetLoader<AdultEarningsClassificationType> testLoader, ContinuousFeatureQuantiser continuousFeatureQuantiser) throws IOException{
 		NaiveBayesModelService service = new NaiveBayesModelService(continuousFeatureQuantiser);
 		
 		Metrics metrics = performRun(trainingLoader, testLoader, service);

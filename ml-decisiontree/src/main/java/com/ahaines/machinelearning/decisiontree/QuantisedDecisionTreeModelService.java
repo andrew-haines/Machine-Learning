@@ -10,7 +10,7 @@ import com.ahaines.machinelearning.api.dataset.QuantisedDataset;
 import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantiser;
 import com.ahaines.machinelearning.api.dataset.quantiser.RangeFeature;
 
-public class QuantisedDecisionTreeModelService extends DecisionTreeModelService{
+public class QuantisedDecisionTreeModelService<C extends Enum<C>> extends DecisionTreeModelService<C>{
 	
 	private final ContinuousFeatureQuantiser continuousFeatureQuantiser;
 	private Map<Class<? extends ContinuousFeature<?>>, Collection<RangeFeature<?>>> quantisedRanges;
@@ -35,24 +35,24 @@ public class QuantisedDecisionTreeModelService extends DecisionTreeModelService{
 	}
 
 	@Override
-	public Id3Model trainModel(ClassifiedDataset trainingData) {
+	public Id3Model<C> trainModel(ClassifiedDataset<C> trainingData) {
 		
 		// consider quantising continuous values before growing the tree. Should result in more generalised performance and eleminate the
 		// expensive task of re evaluating the quantisation each time a continuous feature is considered.
 		
-		QuantisedDataset quantisedTrainingData = preQuantiseDataSet(trainingData);
+		QuantisedDataset<C> quantisedTrainingData = preQuantiseDataSet(trainingData);
 		
 		quantisedRanges = quantisedTrainingData.getQuantisedRanges();
 		return super.trainModel(quantisedTrainingData);
 	}
 	
-	private QuantisedDataset preQuantiseDataSet(ClassifiedDataset trainingData) {
+	private QuantisedDataset<C> preQuantiseDataSet(ClassifiedDataset<C> trainingData) {
 		
 		return QuantisedDataset.discretise(trainingData, continuousFeatureQuantiser);
 	}
 
 	@Override
-	protected <T extends Number & Comparable<T>> Iterable<Split> splitContinuousFeature(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<T>> featureType) {
+	protected <T extends Number & Comparable<T>> Iterable<Split<C>> splitContinuousFeature(Iterable<ClassifiedFeatureSet<C>> instances, Class<? extends ContinuousFeature<T>> featureType) {
 		return super.splitDiscreteFeature(instances, featureType, quantisedRanges.get(featureType));
 	}
 }

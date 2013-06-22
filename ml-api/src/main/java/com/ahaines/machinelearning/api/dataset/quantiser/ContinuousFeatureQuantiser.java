@@ -15,10 +15,10 @@ public interface ContinuousFeatureQuantiser {
 	 * @param processor
 	 * @return
 	 */
-	<T extends Number & Comparable<T>> Collection<RangeFeature<T>> quantise(Iterable<ClassifiedFeatureSet> instances, Class<? extends ContinuousFeature<T>> featureQuantiserType, QuantiserEventProcessor processor);
+	<T extends Number & Comparable<T>> Collection<RangeFeature<T>> quantise(Iterable<? extends ClassifiedFeatureSet<? extends Enum<?>>> instances, Class<? extends ContinuousFeature<T>> featureQuantiserType, QuantiserEventProcessor processor);
 	
 	public static interface QuantiserEventProcessor {
 		
-		<T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> range, Iterable<ClassifiedFeatureSet> instanceInSplit);
+		<T extends Number & Comparable<T>> void newRangeDetermined(RangeFeature<T> range, Iterable<? extends ClassifiedFeatureSet<? extends Enum<?>>> instanceInSplit);
 	}
 }

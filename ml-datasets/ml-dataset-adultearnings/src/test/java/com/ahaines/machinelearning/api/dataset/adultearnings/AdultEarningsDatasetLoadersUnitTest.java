@@ -18,14 +18,14 @@ public class AdultEarningsDatasetLoadersUnitTest {
 
 	@Test
 	public void givenCandidate_whenCallingGetTrainingDatasetLoader_thenCorrectLoaderReturned() throws IOException{
-		ClassifiedDatasetLoader loader = AdultEarningsDatasetLoaders.getTrainingDatasetLoader();
+		ClassifiedDatasetLoader<AdultEarningsClassificationType> loader = AdultEarningsDatasetLoaders.getTrainingDatasetLoader();
 		
-		ClassifiedDataset dataset = loader.getClassifiedDataset();
+		ClassifiedDataset<AdultEarningsClassificationType> dataset = loader.getClassifiedDataset();
 		
 		assertThat(dataset, is(not(nullValue())));
 		
 		int size = 0;
-		for (ClassifiedFeatureSet features: dataset.getInstances()){
+		for (ClassifiedFeatureSet<AdultEarningsClassificationType> features: dataset.getInstances()){
 			assertThat(features, is(not(nullValue())));
 			size++;
 		}

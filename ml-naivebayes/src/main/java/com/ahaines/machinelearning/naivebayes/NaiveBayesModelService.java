@@ -16,7 +16,7 @@ import com.ahaines.machinelearning.naivebayes.NaiveBayesModel.NaiveBayesModelFac
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 
-public class NaiveBayesModelService implements ModelService<NaiveBayesModel>{
+public class NaiveBayesModelService<C extends Enum<C>> implements ModelService<NaiveBayesModel<C>, C>{
 
 	private final ContinuousFeatureQuantiser quantiser;
 	
@@ -24,10 +24,10 @@ public class NaiveBayesModelService implements ModelService<NaiveBayesModel>{
 		this.quantiser = quantiser;
 	}
 	@Override
-	public NaiveBayesModel trainModel(ClassifiedDataset trainingData) {
-		NaiveBayesModelFactory modelFactory = new NaiveBayesModelFactory(quantiser);
+	public NaiveBayesModel<C> trainModel(ClassifiedDataset<C> trainingData) {
+		NaiveBayesModelFactory<C> modelFactory = new NaiveBayesModelFactory<C>(quantiser);
 		
-		for (ClassifiedFeatureSet instance: trainingData.getInstances()){
+		for (ClassifiedFeatureSet<C> instance: trainingData.getInstances()){
 			modelFactory.addInstance(instance);
 		}
 		
@@ -35,46 +35,46 @@ public class NaiveBayesModelService implements ModelService<NaiveBayesModel>{
 	}
 
 	@Override
-	public ClassifiedProbabilityDataSet classifyDataset(Dataset<? extends FeatureSet> dataset, final NaiveBayesModel model) {
+	public ClassifiedProbabilityDataSet<C> classifyDataset(Dataset<? extends FeatureSet> dataset, final NaiveBayesModel<C> model) {
 		
-		Iterable<ClassificationProbability<?>> classifications = Iterables.transform(dataset.getInstances(), new Function<FeatureSet, ClassificationProbability<?>>(){
+		Iterable<ClassificationProbability<C>> classifications = Iterables.transform(dataset.getInstances(), new Function<FeatureSet, ClassificationProbability<C>>(){
 			
-			public ClassificationProbability<?> apply(FeatureSet instance){
+			public ClassificationProbability<C> apply(FeatureSet instance){
 				return model.getClassification(instance);
 			}
 		});
 		
-		return new ClassifiedProbabilityDataSet(dataset, Identifiable.UTIL.index(classifications));
+		return new ClassifiedProbabilityDataSet<C>(dataset, Identifiable.UTIL.index(classifications));
 	}
 
-	public static class ClassifiedProbabilityDataSet extends ClassifiedDatasetImpl{
+	public static class ClassifiedProbabilityDataSet<C extends Enum<C>> extends ClassifiedDatasetImpl<C>{
 
 		protected ClassifiedProbabilityDataSet(Dataset<? extends FeatureSet> dataset,
-				Map<Identifier, ? extends ClassificationProbability<? extends Enum<?>>> classifications) {
+				Map<Identifier, ? extends ClassificationProbability<C>> classifications) {
 			super(dataset, classifications);
 		}
 
 		@Override
-		public ClassifiedProbabilityFeatureSet getInstance(Identifier instanceId) {
+		public ClassifiedProbabilityFeatureSet<C> getInstance(Identifier instanceId) {
 			FeatureSet instance = dataset.getInstance(instanceId);
 			
-			ClassificationProbability<?> classification = (ClassificationProbability<?>)classifications.get(instanceId);
+			ClassificationProbability<C> classification = (ClassificationProbability<C>)classifications.get(instanceId);
 			
-			return new ClassifiedProbabilityFeatureSet(instance, classification);
+			return new ClassifiedProbabilityFeatureSet<C>(instance, classification);
 		}
 		
 	}
 	
-	public static class ClassifiedProbabilityFeatureSet extends ClassifiedFeatureSet{
+	public static class ClassifiedProbabilityFeatureSet<C extends Enum<C>> extends ClassifiedFeatureSet<C>{
 
 		public ClassifiedProbabilityFeatureSet(FeatureSet instance,
-				ClassificationProbability<?> classification) {
+				ClassificationProbability<C> classification) {
 			super(instance, classification);
 		}
 
 		@Override
-		public ClassificationProbability<? extends Enum<?>> getClassification() {
-			return (ClassificationProbability<?>)super.getClassification();
+		public ClassificationProbability<C> getClassification() {
+			return (ClassificationProbability<C>)super.getClassification();
 		}
 	}
 }
