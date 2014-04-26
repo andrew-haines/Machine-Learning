@@ -7,6 +7,7 @@
         <version>0.0.0.1-SNAPSHOT</version>
         <name>Machine Learning - Parent</name>
         <modules>
+		<module>ml-model</module>
                 <module>ml-api</module>
                 <module>ml-decisiontree</module>
                 <module>ml-naivebayes</module>
