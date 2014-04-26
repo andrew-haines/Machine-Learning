@@ -7,9 +7,11 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.ahaines.machinelearning.api.dataset.ContinuousFeature.IntegerFeature;
-import com.ahaines.machinelearning.api.dataset.ContinuousFeature.LongFeature;
 import com.ahaines.machinelearning.api.dataset.FeatureSet.FeatureSetFactory;
+import com.haines.ml.model.DiscreteFeature;
+import com.haines.ml.model.Feature;
+import com.haines.ml.model.ContinuousFeature.IntegerFeature;
+import com.haines.ml.model.ContinuousFeature.LongFeature;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.is;

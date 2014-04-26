@@ -1,11 +1,15 @@
 package com.ahaines.machinelearning.api.dataset;
 
+import com.ahaines.machinelearning.api.dataset.Classification;
+import com.haines.ml.model.ClassifiedInstance;
+import com.haines.ml.model.Feature;
+
 /**
  * A type of {@link FeatureSet} instance that contains a {@link Classification}
  * @author andrewhaines
  *
  */
-public class ClassifiedFeatureSet<C> implements FeatureSet{
+public class ClassifiedFeatureSet<C> implements FeatureSet, ClassifiedInstance<Classification<C>>{
 	private final FeatureSet instance;
 	private final Classification<C> classification;
 	

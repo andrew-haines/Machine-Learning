@@ -2,9 +2,9 @@ package com.ahaines.machinelearning.test.spam;
 
 import java.util.Arrays;
 
-import com.ahaines.machinelearning.api.dataset.DiscreteFeature;
-import com.ahaines.machinelearning.api.dataset.Feature;
-import com.ahaines.machinelearning.api.dataset.ContinuousFeature.IntegerFeature;
+import com.haines.ml.model.DiscreteFeature;
+import com.haines.ml.model.Feature;
+import com.haines.ml.model.ContinuousFeature.IntegerFeature;
 
 public class Email {
 

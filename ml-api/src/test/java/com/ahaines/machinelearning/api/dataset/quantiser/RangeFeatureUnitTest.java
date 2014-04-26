@@ -3,8 +3,8 @@ package com.ahaines.machinelearning.api.dataset.quantiser;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.ahaines.machinelearning.api.dataset.ContinuousFeature.IntegerFeature;
 import com.ahaines.machinelearning.api.dataset.quantiser.RangeFeature;
+import com.haines.ml.model.ContinuousFeature.IntegerFeature;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.is;

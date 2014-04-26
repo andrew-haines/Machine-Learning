@@ -13,11 +13,7 @@ import com.ahaines.machinelearning.api.ModelService;
 import com.ahaines.machinelearning.api.dataset.Classification;
 import com.ahaines.machinelearning.api.dataset.ClassifiedDataset;
 import com.ahaines.machinelearning.api.dataset.ClassifiedFeatureSet;
-import com.ahaines.machinelearning.api.dataset.ContinuousFeature;
-import com.ahaines.machinelearning.api.dataset.DiscreteFeature;
 import com.ahaines.machinelearning.api.dataset.Dataset;
-import com.ahaines.machinelearning.api.dataset.Feature;
-import com.ahaines.machinelearning.api.dataset.Feature.Features;
 import com.ahaines.machinelearning.api.dataset.FeatureDefinition;
 import com.ahaines.machinelearning.api.dataset.FeatureSet;
 import com.ahaines.machinelearning.api.dataset.Identifier;
@@ -29,6 +25,10 @@ import com.ahaines.machinelearning.decisiontree.MissingFeatureClassifier.Missing
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.haines.ml.model.ContinuousFeature;
+import com.haines.ml.model.DiscreteFeature;
+import com.haines.ml.model.Feature;
+import com.haines.ml.model.Feature.Features;
 
 /**
  * An id3 based implementation of a decision tree classification. Note that this has been altered to handle both
@@ -163,6 +163,7 @@ public class DecisionTreeModelService<C extends Enum<C>> implements ModelService
 
 	}
 	
+	@SuppressWarnings("unchecked")
 	private FeatureSplits<C> getBestSplit(Iterable<ClassifiedFeatureSet<C>> instances, Iterable<Class<? extends Feature<?>>> featureTypes) {
 		double minImpurity = Double.MAX_VALUE;
 		Iterable<Split<C>> bestSplits = null;
@@ -172,7 +173,7 @@ public class DecisionTreeModelService<C extends Enum<C>> implements ModelService
 			
 			Iterable<Split<C>> splits;
 			if (DiscreteFeature.class.isAssignableFrom(featureType)){
-				splits = splitDiscreteFeature(instances, (Class<? extends DiscreteFeature<?>>) featureType);
+				splits = splitDiscreteFeature(instances, (Class<DiscreteFeature<?>>) featureType);
 			} else if (ContinuousFeature.class.isAssignableFrom(featureType)){
 				splits = splitContinuousFeature(instances, (Class)featureType);
 			} else{

@@ -9,10 +9,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.ahaines.machinelearning.api.dataset.ClassifiedFeatureSet;
-import com.ahaines.machinelearning.api.dataset.ContinuousFeature;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.haines.ml.model.ContinuousFeature;
+import com.haines.ml.util.NumberConverter;
 
 public class ContinuousFeatureQuantisers {
 

@@ -3,10 +3,10 @@ package com.ahaines.machinelearning.decisiontree;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import com.ahaines.machinelearning.api.dataset.Feature;
-import com.ahaines.machinelearning.api.dataset.Feature.Features;
 import com.ahaines.machinelearning.api.dataset.FeatureDefinition;
 import com.ahaines.machinelearning.api.dataset.FeatureSet;
+import com.haines.ml.model.Feature;
+import com.haines.ml.model.Feature.Features;
 
 /**
  * An internal node of the decision tree data structure. This class is either a leaf node or the parent of a non terminal

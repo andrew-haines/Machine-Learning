@@ -10,6 +10,9 @@ import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuanti
 import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantiser.QuantiserEventProcessor;
 import com.ahaines.machinelearning.api.dataset.quantiser.RangeFeature;
 import com.google.common.collect.Iterables;
+import com.ahaines.machinelearning.api.dataset.Classification;
+import com.haines.ml.model.ContinuousFeature;
+import com.haines.ml.model.Feature;
 
 /**
  *Returns a dataset that contains no continuous values. All continuous values will have been discretised

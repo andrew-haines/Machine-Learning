@@ -1,8 +1,8 @@
 package com.ahaines.machinelearning.api.dataset.quantiser;
 
 
-import com.ahaines.machinelearning.api.dataset.ContinuousFeature;
-import com.ahaines.machinelearning.api.dataset.Feature;
+import com.haines.ml.model.ContinuousFeature;
+import com.haines.ml.model.Feature;
 
 /**
  * A type of feature that intercepts on a range of different values.

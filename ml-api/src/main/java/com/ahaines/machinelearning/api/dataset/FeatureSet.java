@@ -4,12 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.haines.ml.model.Feature;
+import com.haines.ml.model.Instance;
+
 /**
  * Defines a set of features that make up an instance.
  * @author andrewhaines
  *
  */
-public interface FeatureSet extends Identifiable{
+public interface FeatureSet extends Identifiable, Instance{
 	
 	/**
 	 * Given a type, this returns the appropriate feature. Note that only types defined in
@@ -24,8 +27,6 @@ public interface FeatureSet extends Identifiable{
 	 * @return
 	 */
 	Iterable<Class<? extends Feature<?>>> getFeatureTypes();
-	
-	Iterable<Feature<?>> getFeatures();
 	
 	static class FeatureSetImpl implements FeatureSet{
 
@@ -99,7 +100,7 @@ public interface FeatureSet extends Identifiable{
 			
 			int i = 1;
 			for (Class<? extends Feature<?>> featureType: featureTypes){
-				int featureWeight = (31* i);
+				int featureWeight = 31* i;
 				weightAccumulator += featureWeight;
 				featureWeights.put(featureType, featureWeight);
 			}

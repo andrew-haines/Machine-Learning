@@ -3,7 +3,7 @@ package com.ahaines.machinelearning.api.dataset.quantiser;
 import java.util.Collection;
 
 import com.ahaines.machinelearning.api.dataset.ClassifiedFeatureSet;
-import com.ahaines.machinelearning.api.dataset.ContinuousFeature;
+import com.haines.ml.model.ContinuousFeature;
 
 public interface ContinuousFeatureQuantiser {
 

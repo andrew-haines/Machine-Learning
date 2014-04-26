@@ -15,18 +15,18 @@ import org.slf4j.LoggerFactory;
 
 import com.ahaines.machinelearning.api.Model;
 import com.ahaines.machinelearning.api.dataset.ClassifiedFeatureSet;
-import com.ahaines.machinelearning.api.dataset.ContinuousFeature;
-import com.ahaines.machinelearning.api.dataset.DiscreteFeature;
-import com.ahaines.machinelearning.api.dataset.Feature;
 import com.ahaines.machinelearning.api.dataset.FeatureDefinition;
 import com.ahaines.machinelearning.api.dataset.FeatureSet;
 import com.ahaines.machinelearning.api.dataset.Identifier;
-import com.ahaines.machinelearning.api.dataset.Feature.Features;
 import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantiser;
 import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantiser.QuantiserEventProcessor;
 import com.ahaines.machinelearning.api.dataset.quantiser.RangeFeature;
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
+import com.haines.ml.model.ContinuousFeature;
+import com.haines.ml.model.DiscreteFeature;
+import com.haines.ml.model.Feature;
+import com.haines.ml.model.Feature.Features;
 
 public class NaiveBayesModel<C extends Enum<C>> implements Model{
 
