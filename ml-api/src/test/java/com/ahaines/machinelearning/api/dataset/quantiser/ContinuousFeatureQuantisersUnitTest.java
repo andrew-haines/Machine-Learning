@@ -7,7 +7,6 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.ahaines.machinelearning.api.dataset.Classification;
 import com.ahaines.machinelearning.api.dataset.ClassifiedFeatureSet;
 import com.ahaines.machinelearning.api.dataset.FeatureDefinition;
 import com.ahaines.machinelearning.api.dataset.FeatureSet;
@@ -19,6 +18,7 @@ import com.ahaines.machinelearning.test.spam.Email.EmailClassification;
 import com.ahaines.machinelearning.test.spam.Email.Features;
 import com.ahaines.machinelearning.test.spam.Email.Features.Contains;
 import com.google.common.collect.Iterables;
+import com.ahaines.machinelearning.api.dataset.Classification;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.is;

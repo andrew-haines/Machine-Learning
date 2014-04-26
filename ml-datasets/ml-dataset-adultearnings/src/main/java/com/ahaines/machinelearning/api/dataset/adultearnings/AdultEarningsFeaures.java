@@ -3,10 +3,10 @@ package com.ahaines.machinelearning.api.dataset.adultearnings;
 import java.util.Arrays;
 import java.util.List;
 
-import com.ahaines.machinelearning.api.dataset.ContinuousFeature.IntegerFeature;
-import com.ahaines.machinelearning.api.dataset.DiscreteFeature;
-import com.ahaines.machinelearning.api.dataset.Feature;
 import com.ahaines.machinelearning.api.dataset.FeatureSet.FeatureSetFactory;
+import com.haines.ml.model.ContinuousFeature.IntegerFeature;
+import com.haines.ml.model.DiscreteFeature;
+import com.haines.ml.model.Feature;
 
 /**
  * This class defines all the feature types and validation rules for 1994 census dataset.
@@ -20,6 +20,7 @@ public final class AdultEarningsFeaures {
 	public static final List<Class<? extends Feature<?>>> ALL_FEATURE_TYPES = createFeatureTypes(); 
 	public static final FeatureSetFactory ADULT_FEATURE_SET = new FeatureSetFactory(ALL_FEATURE_TYPES);
 	
+	@SuppressWarnings("unchecked")
 	private static List<Class<? extends Feature<?>>> createFeatureTypes() {
 		return Arrays.<Class<? extends Feature<?>>>asList(AgeFeature.class, 
 															    WorkClassFeature.class, 

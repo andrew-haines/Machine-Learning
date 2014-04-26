@@ -9,13 +9,13 @@ import org.junit.Test;
 
 import com.ahaines.machinelearning.api.dataset.Classification;
 import com.ahaines.machinelearning.api.dataset.ClassifiedFeatureSet;
-import com.ahaines.machinelearning.api.dataset.DiscreteFeature;
-import com.ahaines.machinelearning.api.dataset.Feature;
 import com.ahaines.machinelearning.api.dataset.FeatureDefinition;
 import com.ahaines.machinelearning.api.dataset.FeatureSet.FeatureSetFactory;
 import com.ahaines.machinelearning.api.dataset.Identifier;
 import com.ahaines.machinelearning.decisiontree.ImpurityProcessor;
 import com.ahaines.machinelearning.decisiontree.ImpurityProcessor.ImpurityProcessors;
+import com.haines.ml.model.DiscreteFeature;
+import com.haines.ml.model.Feature;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.is;

@@ -23,14 +23,14 @@ import org.slf4j.LoggerFactory;
 
 import com.ahaines.machinelearning.api.dataset.ClassifiedDataset;
 import com.ahaines.machinelearning.api.dataset.ClassifiedDatasetLoader;
-import com.ahaines.machinelearning.api.dataset.ContinuousFeature.IntegerFeature;
 import com.ahaines.machinelearning.api.dataset.Dataset.DatasetBuilder;
-import com.ahaines.machinelearning.api.dataset.Feature.Features;
-import com.ahaines.machinelearning.api.dataset.DiscreteFeature;
-import com.ahaines.machinelearning.api.dataset.Feature;
 import com.ahaines.machinelearning.api.dataset.FeatureDefinition;
 import com.ahaines.machinelearning.api.dataset.Identifier;
 import com.ahaines.machinelearning.api.dataset.adultearnings.AdultEarningsFeaures.EducationFeature;
+import com.haines.ml.model.ContinuousFeature.IntegerFeature;
+import com.haines.ml.model.DiscreteFeature;
+import com.haines.ml.model.Feature;
+import com.haines.ml.model.Feature.Features;
 
 /**
  * The dataloaders for loading and parsing the raw training and test files into the domain

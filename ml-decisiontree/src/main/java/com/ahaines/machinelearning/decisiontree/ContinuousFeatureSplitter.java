@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 
 import com.ahaines.machinelearning.api.dataset.ClassifiedFeatureSet;
-import com.ahaines.machinelearning.api.dataset.ContinuousFeature;
 import com.ahaines.machinelearning.api.dataset.FeatureDefinition;
 import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantiser;
 import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantiser.QuantiserEventProcessor;
@@ -12,6 +11,7 @@ import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuanti
 import com.ahaines.machinelearning.api.dataset.quantiser.RangeFeature;
 import com.ahaines.machinelearning.api.util.Utils;
 import com.ahaines.machinelearning.decisiontree.DecisionTreeModelService.Split;
+import com.haines.ml.model.ContinuousFeature;
 
 public interface ContinuousFeatureSplitter {
 

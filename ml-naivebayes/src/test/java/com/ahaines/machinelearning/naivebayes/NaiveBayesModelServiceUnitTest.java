@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import com.ahaines.machinelearning.api.dataset.Classification;
 import com.ahaines.machinelearning.api.dataset.ClassifiedDataset;
 import com.ahaines.machinelearning.api.dataset.Dataset;
-import com.ahaines.machinelearning.api.dataset.Feature;
 import com.ahaines.machinelearning.api.dataset.Dataset.DatasetBuilder;
 import com.ahaines.machinelearning.api.dataset.FeatureDefinition;
 import com.ahaines.machinelearning.api.dataset.FeatureSet;
@@ -27,6 +26,7 @@ import com.ahaines.machinelearning.test.spam.Email.Features;
 import com.ahaines.machinelearning.test.spam.Email.Features.Contains;
 import com.ahaines.machinelearning.test.spam.Email.Features.EnlargementFeature;
 import com.ahaines.machinelearning.test.spam.Email.Features.ViagraFeature;
+import com.haines.ml.model.Feature;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
@@ -34,23 +34,23 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 public class NaiveBayesModelServiceUnitTest {
 
-	private NaiveBayesModelService candidate;
+	private NaiveBayesModelService<EmailClassification> candidate;
 
 	private static final Logger LOG = LoggerFactory.getLogger(NaiveBayesModelServiceUnitTest.class);
 	
 	private static Iterable<? extends Class<? extends Feature<?>>> DISCRETE_FEATURE_TYPES = Arrays.asList(EnlargementFeature.class, ViagraFeature.class);
 
 	private static final FeatureSet.FeatureSetFactory DISCRETE_FACTORY = new FeatureSet.FeatureSetFactory(DISCRETE_FEATURE_TYPES);
-	private static final ClassifiedDataset TEST_DISCRETE_TRAINING_SET = loadDiscreteTrainingSet();
+	private static final ClassifiedDataset<EmailClassification> TEST_DISCRETE_TRAINING_SET = loadDiscreteTrainingSet();
 	private static final Dataset<FeatureSet> DISCRETE_TEST_SET = loadDiscreteTestSet();
 	
 	private static final FeatureSet.FeatureSetFactory CONTINUOUS_FACTORY = new FeatureSet.FeatureSetFactory(Features.ALL_FEATURE_TYPES);
-	private static final ClassifiedDataset TEST_CONTINUOUS_TRAINING_SET = loadContinuousTrainingSet();
+	private static final ClassifiedDataset<EmailClassification> TEST_CONTINUOUS_TRAINING_SET = loadContinuousTrainingSet();
 	private static final Dataset<FeatureSet> CONTINUOUS_TEST_SET = loadContinuousTestSet();
 	
 	@Before
 	public void before(){
-		candidate = new NaiveBayesModelService(ContinuousFeatureQuantisers.getConstantBucketQuantiser(4));
+		candidate = new NaiveBayesModelService<EmailClassification>(ContinuousFeatureQuantisers.getConstantBucketQuantiser(4));
 	}
 	
 	private static Dataset<FeatureSet> loadContinuousTestSet() {
@@ -68,7 +68,7 @@ public class NaiveBayesModelServiceUnitTest {
 		return builder.build();
 	}
 
-	private static ClassifiedDataset loadContinuousTrainingSet() {
+	private static ClassifiedDataset<EmailClassification> loadContinuousTrainingSet() {
 		DatasetBuilder builder = new DatasetBuilder(Features.ALL_FEATURE_TYPES);
 		Collection<Classification<EmailClassification>> classifications = new LinkedList<Classification<EmailClassification>>();
 		
@@ -117,7 +117,7 @@ public class NaiveBayesModelServiceUnitTest {
 		return builder.build();
 	}
 
-	private static ClassifiedDataset loadDiscreteTrainingSet() {
+	private static ClassifiedDataset<EmailClassification> loadDiscreteTrainingSet() {
 		
 		DatasetBuilder builder = new DatasetBuilder(DISCRETE_FEATURE_TYPES);
 		
@@ -162,13 +162,12 @@ public class NaiveBayesModelServiceUnitTest {
 																							   new FeatureDefinition(new Features.HoursIgnoredFeature(hoursIgnored))));
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void givenDiscreteCandidate_whenTraining2Instances_thenCorrectProbabilitiesCalculated(){
 		LOG.debug("training with discrete dataset");
-		NaiveBayesModel model = candidate.trainModel(TEST_DISCRETE_TRAINING_SET);
+		NaiveBayesModel<EmailClassification> model = candidate.trainModel(TEST_DISCRETE_TRAINING_SET);
 		
-		ClassifiedProbabilityDataSet classifiedDataset = candidate.classifyDataset(DISCRETE_TEST_SET, model);
+		ClassifiedProbabilityDataSet<EmailClassification> classifiedDataset = candidate.classifyDataset(DISCRETE_TEST_SET, model);
 		
 		ClassificationProbability<EmailClassification> classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(1)).getClassification();
 		
@@ -191,13 +190,12 @@ public class NaiveBayesModelServiceUnitTest {
 		assertThat(classification.getProbability(), is(equalTo(0.8971042962639604)));
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Test
 	public void givenContinuousCandidate_whenTraining2Instances_thenCorrectProbabilitiesCalculated(){
 		LOG.debug("training with continuous dataset");
-		NaiveBayesModel model = candidate.trainModel(TEST_CONTINUOUS_TRAINING_SET);
+		NaiveBayesModel<EmailClassification> model = candidate.trainModel(TEST_CONTINUOUS_TRAINING_SET);
 		
-		ClassifiedProbabilityDataSet classifiedDataset = candidate.classifyDataset(CONTINUOUS_TEST_SET, model);
+		ClassifiedProbabilityDataSet<EmailClassification> classifiedDataset = candidate.classifyDataset(CONTINUOUS_TEST_SET, model);
 		
 		ClassificationProbability<EmailClassification> classification = (ClassificationProbability<EmailClassification>)classifiedDataset.getInstance(Identifier.FACTORY.createIdentifier(1)).getClassification();
 		
