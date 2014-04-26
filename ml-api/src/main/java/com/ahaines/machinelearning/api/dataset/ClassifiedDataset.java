@@ -3,10 +3,12 @@ package com.ahaines.machinelearning.api.dataset;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.ahaines.machinelearning.api.dataset.Feature.Features;
 import com.ahaines.machinelearning.api.util.CachedIterable;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import com.ahaines.machinelearning.api.dataset.Classification;
+import com.haines.ml.model.Feature;
+import com.haines.ml.model.Feature.Features;
 
 /**
  * A type of {@link Dataset} that contains classified instances.

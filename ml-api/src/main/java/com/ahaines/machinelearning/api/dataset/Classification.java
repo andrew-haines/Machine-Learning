@@ -1,5 +1,6 @@
 package com.ahaines.machinelearning.api.dataset;
 
+
 /**
  * Defines a classification value to an instance denoted by {@link #getId()}.
  * @author andrewhaines

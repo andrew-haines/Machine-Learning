@@ -1,5 +1,7 @@
 package com.ahaines.machinelearning.api.dataset;
 
+import com.haines.ml.model.Feature;
+
 /**
  * A feature definitions that defines the feature value and it's type. {@link Feature#getClass()} is not enough
  * to determine the type as default values defined in {@link Feature.Features} might be set.

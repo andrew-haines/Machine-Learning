@@ -5,10 +5,10 @@ import java.util.Map;
 
 import com.ahaines.machinelearning.api.dataset.ClassifiedDataset;
 import com.ahaines.machinelearning.api.dataset.ClassifiedFeatureSet;
-import com.ahaines.machinelearning.api.dataset.ContinuousFeature;
 import com.ahaines.machinelearning.api.dataset.QuantisedDataset;
 import com.ahaines.machinelearning.api.dataset.quantiser.ContinuousFeatureQuantiser;
 import com.ahaines.machinelearning.api.dataset.quantiser.RangeFeature;
+import com.haines.ml.model.ContinuousFeature;
 
 public class QuantisedDecisionTreeModelService<C extends Enum<C>> extends DecisionTreeModelService<C>{
 	

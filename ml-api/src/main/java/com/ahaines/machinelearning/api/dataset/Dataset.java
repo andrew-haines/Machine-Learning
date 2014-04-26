@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.haines.ml.model.Feature;
+
 /**
  * This represents a set of instances
  * @author andrewhaines
