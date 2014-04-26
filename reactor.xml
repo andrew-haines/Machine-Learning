@@ -11,6 +11,7 @@
                 <module>ml-api</module>
                 <module>ml-decisiontree</module>
                 <module>ml-naivebayes</module>
+		<module>ml-neuralnetwork</module>
                 <module>ml-datasets/ml-dataset-adultearnings</module>
                 <module>ml-main</module>
         </modules>
