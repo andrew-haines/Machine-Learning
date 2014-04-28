@@ -13,6 +13,7 @@
                 <module>ml-naivebayes</module>
 		<module>ml-neuralnetwork</module>
                 <module>ml-datasets/ml-dataset-adultearnings</module>
+		<module>ml-datasets/ml-dataset-wine</module>
                 <module>ml-main</module>
         </modules>
 </project>
