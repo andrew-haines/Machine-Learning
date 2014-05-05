@@ -5,14 +5,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,28 +70,8 @@ public final class AdultEarningsDatasetLoaders{
 	}
 
 	private static ClassifiedDataset<AdultEarningsClassificationType> loadDataset(final URI uri, boolean includeMissingFeatures) throws IOException {
-		Path path;
-		try{
-			path = Paths.get(uri);
-		} catch (FileSystemNotFoundException e){
-			
-			if (uri.getScheme().equalsIgnoreCase("jar")){
-				String completeUri = uri.toString();
-				
-				int jarFileIdx = completeUri.indexOf(".jar!")+4;
-				
-				String jarFileLoc = completeUri.substring(0, jarFileIdx);
-				String fileInJar = completeUri.substring(jarFileIdx+1);
-				
-				LOG.debug("Jar file location = "+jarFileLoc);
-				LOG.debug("File in jar = "+fileInJar);
-				
-				FileSystem zipFs = FileSystems.newFileSystem(URI.create(jarFileLoc), Collections.<String, Object>emptyMap());
-				path = zipFs.getPath(fileInJar);
-			} else{
-				throw e;
-			}
-		}
+		
+		Path path = ClassifiedDatasetLoader.UTIL.getPath(uri);
 		
 		List<String> lines = Files.readAllLines(path, Charset.forName("UTF-8"));
 		// trim first 4 lines

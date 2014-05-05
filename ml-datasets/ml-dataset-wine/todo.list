@@ -1,0 +1,36 @@
+neural network data preprocessing
+
+- calculate average baseline from 4EG_1_0ppb, 4EG_2_0ppb, 4EP_1_0ppb, 4EP_2_0ppb.
+
+- using ksmoothing to average points over a kernel window
+
+- smooth datapoints so it doesnt sample every 0.5 seconds. observe graph to determine
+  interval to smooth over. 
+  
+- observe which sensors react to 4EG and 4EP presence respectively.
+	- both react to T70/2, T30/1, PA2 only really. 
+	- 4EG starts with a negative impact on these sensors, rises, and then decreases
+	- 4EP starts by a positive impact on these sensors and then naturally decays.
+  
+- determine if any sensors simply dont react to the presence of these analytes in callibration set
+
+- Remove these features if this is the case
+
+- subtract smoothed baseline from all smoothed training sets and callibration sets.
+
+- combine processed training and callibration sets
+
+- The result will be input to the NN
+
+neural network process
+
+- perform whitening on input to remove correlation between features resulting in new feature space
+
+- check if any of the new features can be pruned
+
+- send resultant feature space to RBF for training
+
+- check performance using K fold cross validation of training set to test set
+
+- once confident in the model, process the prediction set to get 4EG, 4EP quantities
+
