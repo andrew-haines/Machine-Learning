@@ -4,6 +4,7 @@ library(reshape2)
 
 colNames <- c("time", "SY/LG","SY/G","SY/AA","SY/Gh","SY/gCTl","SY/gCT","T30/1","P10/1","P10/2","P40/1","T70/2","PA2");
 
+# 
 averageDataSets <- function(dataset1, dataset2) {
   return ((dataset1 + dataset2) / 2);
 }
@@ -12,15 +13,44 @@ describe_2 <- function(x) {
   c(mean=mean(x), median=median(x), IQR25=as.numeric(quantile(x, probs=c(0.25))), IQR75=as.numeric(quantile(x, probs=c(0.75))) )
 }
 
+#function to normalise an input vector between 0-1
 norm <- function(x) {
   return ((x - min(x, na.rm=TRUE)) / (max(x, na.rm=TRUE) - min(x, na.rm=TRUE)))
 }
 
+# takes a dataset and desamples it
+deSampleDataset <- function(x, newFreq) {
+  
+  # determine current frequency in dataset
+  currentFreq = x$time[2] - x$time[1];
+  
+  if (newFreq < currentFreq){
+     stop(paste("the new frequency", newFreq, "cannot be less then the current frequency", currentFreq));
+  }
+  
+  # work out how many samples we need to combine together
+  newSampleWindow = newFreq / currentFreq;
+  
+  df <- x;
+  
+  #create an index property that groups every newSampleWindow samples together
+  i <- seq(1,nrow(x), newSampleWindow)
+  df$index <- rep(i, each=newSampleWindow)[1:nrow(df)]
+  
+  # now average each group and combine using aggregate function
+  df <- aggregate(df, by=list(df$index), mean)
+  
+  # remove unwanted columns used to perform grouping. Only return the columns that were passed into function
+  return (df[colnames(x)]);
+}
+
 normalise <- function(vector, normalised=TRUE){
   if (normalised == TRUE){
-    #result <- (vector - min(vector)) / (max(vector) - min(vector));
     
-    return (as.data.frame(lapply(vector, norm)) );
+    normalisedValues = as.data.frame(lapply(vector[colnames(vector)[2:ncol(vector)]], norm));
+    normalisedValues$"time" <- vector$"time";
+    
+    return (normalisedValues);
   }else { # otherwise disable normalisation
     return (vector);
   }
@@ -171,10 +201,19 @@ egDifference = subtractSensorReadings(av200EG, avBaselineDatasetEG);
 epDifference = subtractSensorReadings(av120EP, avBaselineDatasetEP);
 epDifference2 = subtractSensorReadings(av80EP, avBaselineDatasetEP);
 
+# Plot sensors
+
+plotSensors(avBaselineDatasetEG[seq(1,nrow(avBaselineDatasetEG), 1),], TRUE); # T70/2, T30/1, PA2
 plotSensors(avBaselineDatasetEG, TRUE); # T70/2, T30/1, PA2
 plotSensors(egDifference, FALSE); # T70/2, T30/1, PA2
+plotSensors(deSampleDataset(egDifference, 10), FALSE);
+
+nrow(egDifference);
+nrow(deSampleDataset(egDifference, 10));
+
 plotSensors(epDifference, FALSE); # T70/2, T30/1, PA2
 plotSensors(epDifference2, FALSE); 
 
 plotSensors(truncateFeatures(egDifference, c("time", "T70/2", "T30/1", "PA2")), FALSE)
 plotSensors(truncateFeatures(epDifference, c("time", "T70/2", "T30/1", "PA2")), FALSE)
+
