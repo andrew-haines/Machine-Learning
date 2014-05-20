@@ -18,11 +18,27 @@ neural network data preprocessing
 
 - subtract smoothed baseline from all smoothed training sets and callibration sets.
 
-- combine processed training and callibration sets
-
 - The result will be input to the NN
 
 neural network process
+
+## k means. Determining prototypes
+- chose k
+
+- run batch k means algorithm to determine the prototypes
+
+- remove prototypes that have no data points associated with them
+
+- calculate sigma covariance matrix using data points associated with each prototype. 
+  Only useful if we have lots of datapoints. 
+  Try, fail, then pick sigma using n fold cross validation 
+  
+- once we have k prototypes, compute distance matrix between N data points (feature set) and prototypes (n x k)
+
+- Add bias 
+
+- calculate weights based on distance matrix calculated above and the expected results (D) of 
+  the provided N data points (so |expected results| = N) using pseudoinverse. W = pinv(distanceMatrix) . D
 
 - perform whitening on input to remove correlation between features resulting in new feature space
 

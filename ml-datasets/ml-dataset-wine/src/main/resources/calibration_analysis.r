@@ -5,6 +5,9 @@ library(lattice)
 
 colNames <- c("time", "SY/LG","SY/G","SY/AA","SY/Gh","SY/gCTl","SY/gCT","T30/1","P10/1","P10/2","P40/1","T70/2","PA2");
 
+# define out trainingSet class
+trainingInstance <- setClass("trainingInstance", slots=c(features="numeric", expectedOutput="numeric"));
+
 # 
 averageDataSets <- function(dataset1, dataset2) {
   return ((dataset1 + dataset2) / 2);
@@ -106,19 +109,47 @@ gaussianRbf <- function(distance, sigma){
 
 gaussianRbfFactory <- function(sigma){
   return (function(distance){
-    return (guassianRbf(distance, sigma))
+    return (gaussianRbf(distance, sigma))
   });
 }
 
 getDistanceMatrix <- function(instances, prototypes, distanceMeasure=l2Norm){
-  return (as.data.frame(apply(prototypes, 1, function(prototype){
-      return (apply(instances, 1, function(instance){
-        return (distanceMeasure(prototype, instance));
-      }));
-  })));
+  distances <- data.frame();
+  
+  for (i in seq(0, nrow(instances))){
+    instance <- instances[i,];
+    instanceDistances = vector();
+    i <- 0;
+    for (j in seq(0, nrow(prototypes))){
+      prototype <- prototypes[j,];
+      instanceDistances[i] <- distanceMeasure(instance, prototype);
+      i <- i + 1;
+    }
+    distances <- rbind(distances, instanceDistances);
+  }
+  
+  colnames(distances) <- rownames(prototypes);
+  rownames(distances) <- rownames(instances);
+  
+  return (distances);
 }
 
-getKMeansPrototypes <- function(instances, k, distanceMeasure=l2Norm){
+# simple empty prototype handler that just removes empty prototypes.
+truncatingEmptyPrototypeHandler <- function(instances, k, distanceMeasure, prototypeHasMembershipMask, prototypes){
+  return (prototypes[prototypeHasMembershipMask == TRUE]);
+}
+
+# this handler will recursively retry calculating the prototypes until every prototype has at least
+# one instance member. Note that, for large k, this could be very computationally intensive especially
+# if k ~ |instances|
+recalculateEmptyPrototypeHandler <- function(instances, k, distanceMeasure, prototypeHasMembershipMask, prototypePositions){
+  if (nrow(instances) > k){
+    stop("You do not have enough instances to spread over k prototypes");
+  }
+  return (getKMeansPrototypes(instances, k, distanceMeasure, recalculateEmptyPrototypeHandler));
+}
+
+getKMeansPrototypes <- function(instances, k, distanceMeasure=l2Norm, emptyPrototypesHandler=truncatingEmptyPrototypeHandler){
   # First create k randomly assigned prototypes with dimensionality bounds 
   # defined by the instances.
   
@@ -181,18 +212,6 @@ getKMeansPrototypes <- function(instances, k, distanceMeasure=l2Norm){
     return (err);
   });
   
-  # TODO - might need to remove prototypes that havent got any instances attrbiuted to them
-  # (ie they are still random points). We print a message here detailing if returned
-  # clustered are still random.
-  
-  prototypeHasMembers <- apply(currentPrototypeMembershipMask, 2, function(prototype){
-    return (any(prototype)); # for each of the prototypes, see if the ownership mask is set for any of the instances
-  });
-  
-  if (!all(prototypeHasMembers)){ # if we have not got all prototypes containing members then display notification.
-    print("Warning! Not all prototypes have members");
-  }
-  
   # create a prototype class.
   
   kprototype <- setClass("kprototype", slots=c(position="numeric", members="data.frame"));
@@ -204,48 +223,96 @@ getKMeansPrototypes <- function(instances, k, distanceMeasure=l2Norm){
     prototype@members <- instances[t(currentPrototypeMembershipMask[, prototypePosition[1]]),];
     return (prototype);
   });
+  
+  # TODO - might need to remove prototypes that havent got any instances attrbiuted to them
+  # (ie they are still random points). We print a message here detailing if returned
+  # clustered are still random.
+  
+  prototypeHasMembers <- apply(currentPrototypeMembershipMask, 2, function(prototype){
+    return (any(prototype)); # for each of the prototypes, see if the ownership mask is set for any of the instances
+  });
+  
+  if (!all(prototypeHasMembers)){ # if we have not got all prototypes containing members then display notification.
+    print("INFO Not all prototypes have members. Removing empty prototypes");
+    
+    prototypes <- emptyPrototypesHandler(instances, k, distanceMeasure, prototypeHasMembers, prototypes);
+  }
+  
   return (prototypes);
 }
 
-getTrainedRBFNetwork <- function(instances, classes, k, lamba, distanceMeasure=l2Norm, rbfFactory=gaussianRbfFactory){
+computeRadialDistanceMatrix <- function(instances, networkModel, distanceMeasure=l2Norm){
   
-  if (k >= nrows(instances)){
+  prototypePositions <- t(sapply(networkModel@prototypes, function(prototype){
+    return (prototype@position);
+  }));
+  
+  absoluteDistanceMatrix <- getDistanceMatrix(instances, prototypePositions, distanceMeasure);
+  
+  # now process the rbf for each distance
+  
+  radialDistanceMatrix <- apply(cbind(seq(1, ncol(absoluteDistanceMatrix)), t(absoluteDistanceMatrix)), 1, function(prototypeDistanceToInstances){
+    prototypeNum <- prototypeDistanceToInstances[1];
+    distances <- prototypeDistanceToInstances[2:length(prototypeDistanceToInstances)];
+    
+    return (networkModel@prototypes[[prototypeNum]]@rbf(distances));
+  });
+  
+  return (radialDistanceMatrix);
+}
+
+getTrainedRBFNetwork <- function(trainingSet, k, lamba=0, distanceMeasure=l2Norm, emptyPrototypesHandler=truncatingEmptyPrototypeHandler, rbfFactory=gaussianRbfFactory){
+  
+  if (k >= length(trainingSet)){
     print("Warning. To avoid overfitting and increase generalisation. 
           The number of prototypes should be less then the number of 
           instances in the training set");
   }
   
+  instances <- as.data.frame(t(sapply(trainingSet, function(trainingInstance){
+    return (trainingInstance@features);
+  })));
+  
+  expectedOutput <- t(sapply(trainingSet, function(trainingInstance){
+    return (trainingInstance@expectedOutput);
+  }));
+  
   # generate k prototypes, clustered around our instances. 
-  prototypes <- getKMeansPrototypes(instances, k, distanceMeasure);
+  prototypes <- getKMeansPrototypes(instances, k, distanceMeasure, emptyPrototypesHandler);
   
   # now define the network state
   
-  prototype <- setClass("prototype", slots=c(position="numeric", rbf="closure"));
+  prototype <- setClass("prototype", slots=c(position="numeric", rbf="function"));
   
-  network <- setClass("network", slots=c(prototypes="prototype", weights="numeric", usingBias="boolean"));
+  network <- setClass("network", slots=c(prototypes="list", weights="matrix"));
   
   # calculate maxiumum distance between all prototypes and calculate sigma based
   # on sigma = d_max / sqrt(2 * k)
   
-  prototypePositions <- apply(prototypes, 1, function(prototype){
+  prototypePositions <- t(sapply(prototypes, function(prototype){
     return (prototype@position);
-  });
+  }));
   
   prototypeDistances <- getDistanceMatrix(prototypePositions, prototypePositions, distanceMeasure);
   
-  maxProtoDistance <- max(prototypeDistances[1,]); # as the matrix is diaganol (prototype->prototype comparison), just looking at the largest value of one row will do.
+  maxProtoDistance <- max(prototypeDistances);
   
   maximumSigma <- maxProtoDistance / sqrt(2 * k);
   
-  networkModel@prototypes <- apply(prototypes, 1, function(prototype){ # for each prototype position, difine the rbf for it
-     prototype@position <- prototypePosition;
+  networkModel <- network();
+  
+  networkModel@prototypes <- lapply(prototypes, function(kprototype){ # for each prototype position, difine the rbf for it
+    
+    prototype <- prototype();
+    
+    prototype@position <- kprototype@position;
      
      # calculate the sigma of the guassian (radial shape) based on the data contained 
      # in this prototype cluster. Note that with few data points this might heavily skew the
      # RBF to outliers if the member size is low.
      
-     if (nrow(prototype@members) > 50){ # only use covariance matrix as the sigma if we have enough members
-        sigma <- cov(prototype@members); 
+     if (nrow(kprototype@members) > 50){ # only use covariance matrix as the sigma if we have enough members
+        sigma <- cov(kprototype@members); 
      } else{
        # use constant sigma
        
@@ -253,24 +320,120 @@ getTrainedRBFNetwork <- function(instances, classes, k, lamba, distanceMeasure=l
      }
      
      prototype@rbf <- rbfFactory(sigma);
+    
+    return (prototype);
    });
   
   
   # now we have our functions set up, lets learn the weights of the network based on the
   # input data...
   
-  distanceMatrix <- getDistanceMatrix(prototypePositions, instances, distanceMeasure);
+  radialDistanceMatrix <- computeRadialDistanceMatrix(instances, networkModel, distanceMeasure);
   
-  # now process the rbf for each distance
+  # using the poggio & girosi error function to inverse and apply a penalty term.
+  # this could be simply replaced with the pseudo inverse * expectedOutput as
+  # inv(t(M) * M)) * M is the pseudo inverse. As i want to use the penalty
+  # term, i explicity define the pseudo inverse here.
+  
+  sqDistanceMatrix <- t(radialDistanceMatrix) %*% radialDistanceMatrix;
+  
+  errorPenalty <- lamba * diag(nrow(sqDistanceMatrix));
+  
+  networkModel@weights <- solve(sqDistanceMatrix + errorPenalty) %*% t(radialDistanceMatrix) %*% expectedOutput;
+  
+  return (networkModel);
 }
-# 
-# trainAndgetCrossValidationErrorRate <- function(network, trainingSet, k=10){
-#   
-#   
-#   
-# }
 
+# This function will take an instance and return a classification based on the provided
+# network
+classifyInstance <- function(instance, network, distanceMeasure=l2Norm){
+  
+  radialDistanceMatrix <- computeRadialDistanceMatrix(as.data.frame(instance), network, distanceMeasure);
+  
+  return (radialDistanceMatrix %*% network@weights);
+}
 
+trainAndgetCrossValidationErrorRate <- function(trainingSet, k=10, nCrossValidations=10, lamba=0, distanceMeasure=l2Norm, emptyPrototypesHandler=truncatingEmptyPrototypeHandler, rbfFactory=gaussianRbfFactory){
+   
+  if (length(trainingSet) < nCrossValidations){
+    stop(paste("there are not enough instances in the training set to seperate the data into", nCrossValidations, " cross validations"));
+  }
+  # first shuffle the training set so buckets are randomly assigned
+  
+  trainingSet <- trainingSet[sample(length(trainingSet))];
+  
+  # now define buckets or bins for each of the n fold tests
+  
+  bucketSize <- floor(length(trainingSet) / nCrossValidations);
+  
+  trainingSetSize <- min(bucketSize * (nCrossValidations-1), length(trainingSet) - bucketSize);
+  
+  if (nCrossValidations == 1){ # just want a single test. Special case. Used for testing
+    bucketSize <- 1;
+    trainingSetSize <- length(trainingSet) - bucketSize;
+  } 
+  
+  # create a mask where FALSE represents test set data, and TRUE represents training set data.
+  # each time a test of training->test is performed, the mask is rotated so the test and training
+  # set buckets are all considered
+  
+  bucketMask <- rep(FALSE, bucketSize);
+  bucketMask <- c(bucketMask, rep(TRUE, trainingSetSize));
+  
+  validationNumber = 0;
+                                      
+  minError <- NULL;
+  maxError <- NULL;
+  overalTotalError <- 0;
+  
+  while(validationNumber != nCrossValidations){
+    
+    foldTrainingSet <- trainingSet[bucketMask];
+    foldTestSet <- trainingSet[!bucketMask];
+    
+    network <- getTrainedRBFNetwork(foldTrainingSet, k, lamba, distanceMeasure, emptyPrototypesHandler, rbfFactory);
+    
+    testInstances <- as.data.frame(t(sapply(foldTestSet, function(trainingInst){
+      return (trainingInst@features);
+    })));
+    predictions <- classifyInstance(testInstances, network);
+    
+    # work out the summed squared errors between the predictions and the expected results
+    
+    expectedOutputs <- t(sapply(foldTestSet, function(trainingInst){
+      return (trainingInst@expectedOutput);
+    }));
+    
+    errors <- (predictions - expectedOutputs)^2;
+    
+    totalError <- sum(errors);
+    
+    if (is.null(minError) || minError > totalError){
+      minError <- totalError;
+    }
+    
+    if (is.null(maxError) || maxError < totalError){
+      maxError <- totalError;
+    }
+    
+    overalTotalError <- overalTotalError + totalError;
+    
+    bucketMask <- rotateMask(bucketMask, bucketSize);
+    
+    validationNumber <- validationNumber + 1;
+  }
+  
+  print(paste("average error is:", (overalTotalError / nCrossValidations)));
+  print(paste("max error is:", maxError));
+  print(paste("min error is:", minError));
+}
+
+rotateMask <- function(bucketMask, bucketSize){
+  
+  bucketMask <- c(bucketMask[bucketSize:length(bucketMask)], bucketMask[0:(bucketSize-1)]);
+  
+  return (bucketMask);
+}
 
 smoothDataset <- function(dataset) {
   size = dim(dataset)[2];
