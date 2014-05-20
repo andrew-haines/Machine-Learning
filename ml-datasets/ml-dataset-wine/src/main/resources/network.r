@@ -1,3 +1,4 @@
+
 l2Norm <- function(x1, x2){
   return (c(dist(rbind(x1, x2), method="euclidean")));
 }

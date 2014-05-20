@@ -5,14 +5,6 @@ library(lattice)
 
 colNames <- c("time", "SY/LG","SY/G","SY/AA","SY/Gh","SY/gCTl","SY/gCT","T30/1","P10/1","P10/2","P40/1","T70/2","PA2");
 
-# define out trainingSet class
-trainingInstance <- setClass("trainingInstance", slots=c(features="numeric", expectedOutput="numeric"));
-
-# 
-averageDataSets <- function(dataset1, dataset2) {
-  return ((dataset1 + dataset2) / 2);
-}
-
 describe_2 <- function(x) {
   c(mean=mean(x), median=median(x), IQR25=as.numeric(quantile(x, probs=c(0.25))), IQR75=as.numeric(quantile(x, probs=c(0.75))) )
 }

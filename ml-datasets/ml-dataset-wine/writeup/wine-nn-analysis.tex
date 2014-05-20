@@ -159,8 +159,9 @@ on the calibration dataset (unless explicitly stated) but on the training and pr
 occurs is as presented. The preprocessing steps can be found in preprocessing.r and preprocessing-utils.r R source files.
 
 \begin{enumerate}
-	\item All Data is subtracted from the calibration set's baseline readings to reduce impact from other properties of the wine and its environment.
 	\item All Data is smoothed using Nadaraya–Watson kernel regression estimates
+	\item All Data is subtracted from the calibration set's baseline readings (average of both 4EG and 4EP readings)to reduce impact from 
+		  other properties of the wine and its environment.
 	\item All Data is projected onto the loadings defined in the PCA basis vectors defined in the analysis stage\footnote{Note that i wasnt
 	      sure which loadings to use - the ones from the EG analysis or the EP - so choose the EG ones as they seemed to capture more information}
 	\item All Data is downsampled to $x$ Hz where $x \textless 2$. This value is a free parameter that will be evaluated as part of the network's performance.
