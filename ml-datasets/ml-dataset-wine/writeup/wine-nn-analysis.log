@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013) (format=pdflatex 2014.4.6)  20 MAY 2014 20:56
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013) (format=pdflatex 2014.4.6)  21 MAY 2014 23:12
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -243,15 +243,11 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <8> on input line 10.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <6> on input line 10.
-
-
-LaTeX Warning: Citation `wineSpoilage' on page 1 undefined on input line 15.
-
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <7> on input line 24.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <5> on input line 24.
-<absoluteEGEPreadings.pdf, id=37, 400.49625pt x 339.2675pt>
+ <absoluteEGEPreadings.pdf, id=54, 400.49625pt x 339.2675pt>
 File: absoluteEGEPreadings.pdf Graphic file (type pdf)
 
 <use absoluteEGEPreadings.pdf>
@@ -264,7 +260,7 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
  <./absoluteEGEPreadings.pdf>]
-<normalisedEGEPreadings.pdf, id=64, 400.49625pt x 339.2675pt>
+<normalisedEGEPreadings.pdf, id=81, 400.49625pt x 339.2675pt>
 File: normalisedEGEPreadings.pdf Graphic file (type pdf)
 
 <use normalisedEGEPreadings.pdf>
@@ -274,17 +270,14 @@ Missing character: There is no â in font cmr10!
 Missing character: There is no € in font cmr10!
 Missing character: There is no “ in font cmr10!
 
-
-LaTeX Warning: Citation `nwkernal' on page 2 undefined on input line 58.
-
-<absoluteEGEPDiffreadings.pdf, id=67, 400.49625pt x 339.2675pt>
+<absoluteEGEPDiffreadings.pdf, id=85, 400.49625pt x 339.2675pt>
 File: absoluteEGEPDiffreadings.pdf Graphic file (type pdf)
 
 <use absoluteEGEPDiffreadings.pdf>
 Package pdftex.def Info: absoluteEGEPDiffreadings.pdf used on input line 66.
 (pdftex.def)             Requested size: 220.2736pt x 186.59769pt.
 
-<cumulativeSquaredSum.pdf, id=69, 400.49625pt x 339.2675pt>
+<cumulativeSquaredSum.pdf, id=87, 400.49625pt x 339.2675pt>
 File: cumulativeSquaredSum.pdf Graphic file (type pdf)
 
 <use cumulativeSquaredSum.pdf>
@@ -294,23 +287,14 @@ Package pdftex.def Info: cumulativeSquaredSum.pdf used on input line 71.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-
-LaTeX Warning: Citation `wineSpoilage' on page 2 undefined on input line 79.
-
-
-LaTeX Warning: Citation `MOSAnalysis' on page 2 undefined on input line 79.
-
 [2 <./normalisedEGEPreadings.pdf> <./absoluteEGEPDiffreadings.pdf>]
-
-LaTeX Warning: Citation `whitening' on page 3 undefined on input line 97.
-
-<EGScreePlot.pdf, id=95, 400.49625pt x 339.2675pt>
+<EGScreePlot.pdf, id=118, 400.49625pt x 339.2675pt>
 File: EGScreePlot.pdf Graphic file (type pdf)
  <use EGScreePlot.pdf>
 Package pdftex.def Info: EGScreePlot.pdf used on input line 107.
 (pdftex.def)             Requested size: 240.29959pt x 203.56206pt.
 
-<EPScreePlot.pdf, id=97, 400.49625pt x 339.2675pt>
+<EPScreePlot.pdf, id=120, 400.49625pt x 339.2675pt>
 File: EPScreePlot.pdf Graphic file (type pdf)
  <use EPScreePlot.pdf>
 Package pdftex.def Info: EPScreePlot.pdf used on input line 108.
@@ -328,142 +312,141 @@ Overfull \hbox (10.79959pt too wide) in paragraph at lines 107--109
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-<EGBiPlot.pdf, id=103, 400.49625pt x 339.2675pt>
+<EGBiPlot.pdf, id=126, 400.49625pt x 339.2675pt>
 File: EGBiPlot.pdf Graphic file (type pdf)
  <use EGBiPlot.pdf>
-Package pdftex.def Info: EGBiPlot.pdf used on input line 124.
+Package pdftex.def Info: EGBiPlot.pdf used on input line 125.
 (pdftex.def)             Requested size: 220.2736pt x 186.59769pt.
 
-<EPBiPlot.pdf, id=105, 400.49625pt x 339.2675pt>
+<EPBiPlot.pdf, id=128, 400.49625pt x 339.2675pt>
 File: EPBiPlot.pdf Graphic file (type pdf)
  <use EPBiPlot.pdf>
-Package pdftex.def Info: EPBiPlot.pdf used on input line 125.
+Package pdftex.def Info: EPBiPlot.pdf used on input line 126.
 (pdftex.def)             Requested size: 220.2736pt x 186.59769pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 124--126
+Underfull \hbox (badness 10000) in paragraph at lines 125--127
 [][]
  []
 
 [3 <./cumulativeSquaredSum.pdf>]
 
-LaTeX Warning: Command \textless invalid in math mode on input line 138.
+LaTeX Warning: Command \textless invalid in math mode on input line 140.
 
-LaTeX Font Info:    Try loading font information for OML+cmr on input line 138.
+LaTeX Font Info:    Try loading font information for OML+cmr on input line 140.
 
 (/usr/local/texlive/2013basic/texmf-dist/tex/latex/base/omlcmr.fd
 File: omlcmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OML/cmr/m/n' in size <10> not available
-(Font)              Font shape `OML/cmm/m/it' tried instead on input line 138.
+(Font)              Font shape `OML/cmm/m/it' tried instead on input line 140.
 
 
-LaTeX Warning: Command \textless invalid in math mode on input line 138.
+LaTeX Warning: Command \textless invalid in math mode on input line 140.
 
-[4 <./EGScreePlot.pdf> <./EPScreePlot.pdf> <./EGBiPlot.pdf> <./EPBiPlot.pdf>]
-<deSampledExample.pdf, id=156, 400.49625pt x 339.2675pt>
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [4 <./EGScreePlot.pdf> <./EPScreePlot.pdf> <./EGBiPlot.pdf> <./EPBiPlot.pdf>]
+<deSampledExample.pdf, id=180, 400.49625pt x 339.2675pt>
 File: deSampledExample.pdf Graphic file (type pdf)
 
 <use deSampledExample.pdf>
-Package pdftex.def Info: deSampledExample.pdf used on input line 143.
+Package pdftex.def Info: deSampledExample.pdf used on input line 146.
 (pdftex.def)             Requested size: 220.2736pt x 186.59769pt.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
 Missing character: There is no â in font cmr10!
 Missing character: There is no € in font cmr10!
 Missing character: There is no “ in font cmr10!
 
+LaTeX Warning: Command \textless invalid in math mode on input line 168.
 
-LaTeX Warning: Command \textless invalid in math mode on input line 166.
 
-
-LaTeX Warning: Command \textless invalid in math mode on input line 166.
+LaTeX Warning: Command \textless invalid in math mode on input line 168.
 
 [5 <./deSampledExample.pdf>]
-Underfull \hbox (badness 1924) in paragraph at lines 183--197
+Underfull \hbox (badness 1924) in paragraph at lines 189--203
 \OT1/cmr/m/n/10 The pro-to-type with the low-est dis-tance to an
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 183--197
+Underfull \hbox (badness 10000) in paragraph at lines 189--203
 
  []
 
-
-LaTeX Warning: Citation `poggio' on page 6 undefined on input line 218.
-
 [6]
-Underfull \hbox (badness 10000) in paragraph at lines 244--245
+Overfull \hbox (2.79318pt too wide) in paragraph at lines 254--254
+[]\OT1/cmr/m/n/10 Parameter| 
+ []
+
+[7]
+Underfull \hbox (badness 10000) in paragraph at lines 290--291
 [][][]$\OT1/cmtt/m/n/10 http : / / pubs . acs . org / doi / abs / 10 . 1021 /
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 245--246
+Underfull \hbox (badness 10000) in paragraph at lines 291--292
 [][][]$\OT1/cmtt/m/n/10 http : / / www . plosone . org / article / info %
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 246--247
+Underfull \hbox (badness 10000) in paragraph at lines 292--293
 [][][]$\OT1/cmtt/m/n/10 http : / / en . wikipedia . org / wiki / Whitening _
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 247--248
+Underfull \hbox (badness 10000) in paragraph at lines 293--294
 [][][]$\OT1/cmtt/m/n/10 http : / / en . wikipedia . org / wiki / Kernel _
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 248--249
+Underfull \hbox (badness 10000) in paragraph at lines 294--295
 [][][]$\OT1/cmtt/m/n/10 http : / / cbcl . mit . edu / people / poggio /
  []
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 250.
-[7]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 250.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 296.
+[8
+
+]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 296.
  (./wine-nn-analysis.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 250.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 250.
-
-
-Package rerunfilecheck Warning: File `wine-nn-analysis.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `wine-nn-analysis.out':
-(rerunfilecheck)             Before: 09A47D82AA2347450861374932F4F3A5;439
-(rerunfilecheck)             After:  7529298558F4F9F34D80424ED1AE3D48;570.
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 250.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 296.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 296.
+Package rerunfilecheck Info: File `wine-nn-analysis.out' has not changed.
+(rerunfilecheck)             Checksum: AFD7661410711279A1D88EB0D32A13C8;683.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 296.
  ) 
 Here is how much of TeX's memory you used:
- 5223 strings out of 494536
- 78557 string characters out of 6167447
- 160334 words of memory out of 5000000
- 8404 multiletter control sequences out of 15000+600000
- 8063 words of font info for 29 fonts, out of 8000000 for 9000
+ 5231 strings out of 494536
+ 78642 string characters out of 6167447
+ 161490 words of memory out of 5000000
+ 8407 multiletter control sequences out of 15000+600000
+ 7755 words of font info for 28 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
- 29i,8n,28p,302b,399s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 29i,10n,28p,254b,397s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx1
-0.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/c
-mbx12.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/
-cm/cmex10.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfo
-nts/cm/cmmi10.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/a
-msfonts/cm/cmmi7.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/publi
-c/amsfonts/cm/cmr10.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/pu
-blic/amsfonts/cm/cmr12.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1
-/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/ty
-pe1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/
-type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2013basic/texmf-dist/font
-s/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2013basic/texmf-dist/fo
-nts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2013basic/texmf-dis
-t/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2013basic/texmf-
-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on wine-nn-analysis.pdf (7 pages, 697640 bytes).
+2.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/c
+mex10.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/
+cm/cmmi10.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfo
+nts/cm/cmmi5.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/am
+sfonts/cm/cmmi6.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public
+/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmmi8.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/
+public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/typ
+e1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/
+type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2013basic/texmf-dist/fon
+ts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2013basic/texmf-dist/f
+onts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2013basic/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2013basic/texmf-di
+st/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2013basic/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2013basic/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
+Output written on wine-nn-analysis.pdf (8 pages, 719367 bytes).
 PDF statistics:
- 270 PDF objects out of 1000 (max. 8388607)
- 217 compressed objects within 3 object streams
- 44 named destinations out of 1000 (max. 500000)
- 164 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 307 PDF objects out of 1000 (max. 8388607)
+ 251 compressed objects within 3 object streams
+ 50 named destinations out of 1000 (max. 500000)
+ 196 words of extra memory for PDF output out of 10000 (max. 10000000)
 

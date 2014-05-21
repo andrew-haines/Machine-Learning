@@ -16,6 +16,8 @@ gaussianRbfFactory <- function(sigma){
 getDistanceMatrix <- function(instances, prototypes, distanceMeasure=l2Norm){
   distances <- data.frame();
   
+  # Cant find a nice 'R' way of doing the following that works with both matrixs and vectors.
+  # This will do for now...
   for (i in seq(0, nrow(instances))){
     instance <- instances[i,];
     instanceDistances = vector();
@@ -43,8 +45,8 @@ truncatingEmptyPrototypeHandler <- function(instances, k, distanceMeasure, proto
 # one instance member. Note that, for large k, this could be very computationally intensive especially
 # if k ~ |instances|
 recalculateEmptyPrototypeHandler <- function(instances, k, distanceMeasure, prototypeHasMembershipMask, prototypePositions){
-  if (nrow(instances) > k){
-    stop("You do not have enough instances to spread over k prototypes");
+  if (nrow(instances) < k){
+    stop(paste("You do not have enough instances ",nrow(instances)," to spread over k=",k," prototypes", sep=""));
   }
   return (getKMeansPrototypes(instances, k, distanceMeasure, recalculateEmptyPrototypeHandler));
 }
@@ -133,7 +135,7 @@ getKMeansPrototypes <- function(instances, k, distanceMeasure=l2Norm, emptyProto
   });
   
   if (!all(prototypeHasMembers)){ # if we have not got all prototypes containing members then display notification.
-    print("INFO Not all prototypes have members. Removing empty prototypes");
+    #print("INFO Not all prototypes have members. Removing empty prototypes");
     
     prototypes <- emptyPrototypesHandler(instances, k, distanceMeasure, prototypeHasMembers, prototypes);
   }
@@ -161,7 +163,7 @@ computeRadialDistanceMatrix <- function(instances, networkModel, distanceMeasure
   return (radialDistanceMatrix);
 }
 
-getTrainedRBFNetwork <- function(trainingSet, k, lamba=0, distanceMeasure=l2Norm, emptyPrototypesHandler=truncatingEmptyPrototypeHandler, rbfFactory=gaussianRbfFactory){
+getTrainedRBFNetwork <- function(trainingSet, k, lambda=0, distanceMeasure=l2Norm, emptyPrototypesHandler=truncatingEmptyPrototypeHandler, rbfFactory=gaussianRbfFactory){
   
   if (k >= length(trainingSet)){
     print("Warning. To avoid overfitting and increase generalisation. 
@@ -237,7 +239,7 @@ getTrainedRBFNetwork <- function(trainingSet, k, lamba=0, distanceMeasure=l2Norm
   
   sqDistanceMatrix <- t(radialDistanceMatrix) %*% radialDistanceMatrix;
   
-  errorPenalty <- lamba * diag(nrow(sqDistanceMatrix));
+  errorPenalty <- lambda * diag(nrow(sqDistanceMatrix));
   
   networkModel@weights <- solve(sqDistanceMatrix + errorPenalty) %*% t(radialDistanceMatrix) %*% expectedOutput;
   
@@ -323,9 +325,13 @@ trainAndgetCrossValidationErrorRate <- function(trainingSet, k=10, nCrossValidat
     validationNumber <- validationNumber + 1;
   }
   
-  print(paste("average error is:", (overalTotalError / nCrossValidations)));
+  averageErrorRate <- overalTotalError / nCrossValidations;
+  
+  print(paste("average error is:", (averageErrorRate)));
   print(paste("max error is:", maxError));
   print(paste("min error is:", minError));
+  
+  return (averageErrorRate);
 }
 
 rotateMask <- function(bucketMask, bucketSize){

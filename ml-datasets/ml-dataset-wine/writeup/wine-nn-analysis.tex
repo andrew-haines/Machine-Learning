@@ -117,9 +117,10 @@ Looking at the EP difference dataset tells a similar story but this time PC1 con
 a 0.9209 proportion of the variance. Again the scree plot and kaiser criteria suggest that PC1 need only be kept(see Figure~\ref{fig:screeplot}). 
 As another visual aid, the biplots show in Figure~\ref{fig:biplot} show how the time samples vary around the components\footnote{To make the results
 more visible, the datasets have been desampled to 1 sample every 4 seconds, with values averaged between samples. See Section ~\ref{sec:desampling}}. Also on the plot
-are the relative sensor loadings that point in the direction of the PC1 they attribute to the most. To summarize, by performing PCA on the data, 
+are the relative sensor loadings that point in the direction of the PC they attribute to the most. To summarize, by performing PCA on the data, 
 the new feature space can represent the data in a consistant scale (removing the issues experienced using the graphical methods) and also provides 
-the majority of the information in 2 principle dimensions. 
+the majority of the information in 3 principle dimensions (2 for EG and 1 for EP). Projecting a dataset onto these components greatly reduces
+the dimensionality of the dataset 
 \begin{figure}[h!]
 	\includegraphics[trim = 0mm 0mm 0mm 0mm, clip, scale=0.55]{EGBiPlot.pdf}
 	\includegraphics[trim = 0mm 0mm 0mm 0mm, clip, scale=0.55]{EPBiPlot.pdf}
@@ -128,16 +129,18 @@ the majority of the information in 2 principle dimensions.
 \end{figure}
 \subsection{Desampling}
 \label{sec:desampling}
-As already mentioned, using PCA, the new feature space has allowed 10 dimensions to be dropped. Given that there are still
-1200 readings for each of these dimensions, this still leaves a total feature set containing 2400 dimensions. More work is needed
+As already mentioned, using PCA, the new feature space has reduced the dimensionality to just 3 principle components. Given that there are still
+1200 readings for each of these dimensions, this still leaves a total feature set containing 3600 dimensions. More work is needed
 to reduce it further. Currently the data is sampled at 2Hz meaning there are two readings every second. By desampling to a lower 
-frequency and averaging the replaced samples. To determine the correct degree to which desampling should be performed, PCA is used again.
+frequency and averaging the replaced samples, the dimensionality can be greatly reduced. To determine the correct degree to what degree of desampling 
+should be performed, PCA can be considered again.\\
 The intuition here is that the dataset should be desampled as much as possible but only so much that the variance of the determined PCs
-does not drop too much. Too much in this case is so that the kaiser criteria is still up held to the point that PC1 and PC2 are still
+does not drop too much. Too much in this case is so that the kaiser criteria is still up held to the point that EG (PC1,PC2) and EP(PC1) are still
 the dominent components (it might be possible to desample even further but then include more PC's but this will be left as possible future 
-areas of study). Further to this, although values of $\textless 0.025Hz$ (one reading every 40 seconds - see Figure~\ref{fig:desampledExample}) seem to maintain similar variance values of the
-PCs being considered, The performance of the model will be evaluated with different desampling values to tune this parameter appropriately.
-As a guidance, resampling at 0.025Hz provides a $2 \times 16$ dimensionality model. Something much more manageable then the original dataset.
+areas of study). Further to this, although values of $\textless 0.025Hz$ (one reading every 40 seconds - see Figure~\ref{fig:desampledExample}) 
+seem to maintain similar variance values of the PCs being considered, The performance of the model will be evaluated with different desampling
+values to tune this parameter appropriately. As a guidance, resampling at 0.025Hz provides a $3 \times 16 = 48$ dimensionality model. 
+Something much more manageable then the original dataset.
 
 \begin{figure}[h!]
 	\includegraphics[trim = 0mm 0mm 0mm 0mm, clip, scale=0.55]{deSampledExample.pdf}
@@ -146,12 +149,12 @@ As a guidance, resampling at 0.025Hz provides a $2 \times 16$ dimensionality mod
 \end{figure}
 
 \section{Learning a model}
-Now that the data has been analysed and a proposed workable dataset with ~32 dimensions, an appropriate prediction model needs to be chosen.
+Now that the data has been analysed and a proposed workable dataset with $\approx48$ dimensions, an appropriate prediction model needs to be chosen.
 Due to the computationally efficient learning and prediction phase, its intuitive geometric representation and simply because i have never
 implemented one before, the RBF neural network has been chosen for this prediction problem. Before discussing implementation details
 of the network itself, based on the findings from the previous section, a preprocessing layer is required for all data into the network
 to transform its high dimensional space into something more manageable. 
-\section{PreProcessing}
+\subsection{PreProcessing}
 The next stage of this project was to perform a consistant series of steps to transform all data (both training and prediction sets) into a
 feature space more concise then the original dataset provided. The reduction transformation steps have already been discussed so the following
 serves as a formal reference to the pre processing steps used. It is worth pointing out however that the following steps are no longer performed
@@ -162,9 +165,11 @@ occurs is as presented. The preprocessing steps can be found in preprocessing.r 
 	\item All Data is smoothed using Nadaraya–Watson kernel regression estimates
 	\item All Data is subtracted from the calibration set's baseline readings (average of both 4EG and 4EP readings)to reduce impact from 
 		  other properties of the wine and its environment.
-	\item All Data is projected onto the loadings defined in the PCA basis vectors defined in the analysis stage\footnote{Note that i wasnt
-	      sure which loadings to use - the ones from the EG analysis or the EP - so choose the EG ones as they seemed to capture more information}
 	\item All Data is downsampled to $x$ Hz where $x \textless 2$. This value is a free parameter that will be evaluated as part of the network's performance.
+	\item PCA basis vectors of desampled dataset calculated 
+	\item All Data is projected onto the loadings from the PCA basis vectors \footnote{The loadings used are from both the EG and EP analysis. First the
+		  data is rotated in the EG space, then further rotated into a representative EP space}.
+	\item All but PC1 and PC2 features are removed from the datasets.
 	
 \end{enumerate}
 
@@ -235,11 +240,51 @@ In summary, these parameters are:
 To evaluate the best possible combination of these values prior to predicting the unseen dataset, a N fold cross validation scheme is
 used. This process involves taking the 38 training instances and randomly splitting them into n equal bins. The process works by iterating over the
 bins, one by one, using each bin in turn as a test set and the rest of the bins as the training set. This continues until every bin has been
-the test set against the rest as the training set. The error rates of each iteration are then averaged and this value is deemed the overal error 
-rate of that particular network (and its configuration). The idea here is that the performance of the network is evaluated on all combinations
-of instance training to test sets rather then just only, potentially lucky/unlucky configuration.
+the test set against the rest as the training set. The error rates of each iteration are then averaged using mean squared error
+and this value is deemed the overal error rate of that particular network (and its configuration). The idea here is that the performance of the 
+network is evaluated on all combinations of instance training to test sets rather then just only, potentially lucky/unlucky configurations. 
+Due to the fact that the training set is so small, having as many instances in the training fold is most important. For this reason, 
+18 fold X-validation was used. This equated to 18 tests of 36/2 train/test splits. The implementation is provided in evaluation.r.
 
 \section{Performance results}
+After letting the evaluation run to completion, it determined that that the best values for the free parameters are:
+
+\begin{center}
+	\begin{tabular}{| p{15mm} | p{15mm} | p{15mm} | p{15mm} | }
+	\hline Parameter & $error_{min}^2$ & $error_{max}^2$ & $error_{avg}^2$\\ \hline
+	\( k=25\) & 130 & 231300 & 32970 \\ \hline
+	\( n=20 - 93D\) & 130 & 231300 & 32970 \\ \hline
+	\( \lambda\) & 0.0 & 0.0 & 0.0 \\ \hline
+	\end{tabular} 
+\end{center}
+
+The choice of the parameters was driven by the $error_{avg}$ whereby the parameter that generated the lowest average error was deemed the
+best\footnote{There are two evaluation scripts considered in this project. $evaluate1()$ evaluates all combinations of all parameters to ensure 
+that every parameter is considered. The idea being that the parameters are not independent and that there is an optimal configuration of 
+textit{all} parameters. Due to exponential $O(k^{n^{\lambda}})$ nature of evaluate1 in evaluation.r, it simply took too long to execute. 
+evaluate2 on the other hand evaluates each parameter one by one, holding the other parameters consistant. This implies that the parameters 
+are independent but does complete in $O(k+n+\lambda)$}. Output of the evaluation scripts is presented in performance-results2.txt. It is worth
+noting, that using higher dimensionality feature spaces takes a lot of time to train (\textgreater 20 mins). This may not be a problem with 
+
+\section{Wine Predictions}
+Based on the processes described in this report, the following values are the predictions for the 8 unseen wines. The code for this part
+of the project is presented in prediction.r
+
+\begin{center}
+	\begin{tabular}{| p{15mm} | p{15mm} | p{15mm} | p{15mm} | }
+	\hline Wine Id & 4EG & 4EP \\ \hline
+	\( 731\) & 0.0 & 0.0 \\ \hline
+	\( 734\) & 0.0 & 0.0 \\ \hline
+	\( 738\) & 0.0 & 0.0 \\ \hline
+	\( 744\) & 0.0 & 0.0 \\ \hline
+	\( 746\) & 0.0 & 0.0 \\ \hline
+	\( 754\) & 0.0 & 0.0 \\ \hline
+	\( 759\) & 0.0 & 0.0 \\ \hline
+	\( 768\) & 0.0 & 0.0 \\ \hline
+	\end{tabular} 
+\end{center}
+
+\section{Conclusions}
 
 \begin{thebibliography}{9}
 \bibitem{wineSpoilage} \url{http://pubs.acs.org/doi/abs/10.1021/jf7037289}

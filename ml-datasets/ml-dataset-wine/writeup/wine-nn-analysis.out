@@ -4,7 +4,9 @@
 \BOOKMARK [2][-]{subsection.2.2}{PCA}{section.2}% 4
 \BOOKMARK [2][-]{subsection.2.3}{Desampling}{section.2}% 5
 \BOOKMARK [1][-]{section.3}{Learning a model}{}% 6
-\BOOKMARK [1][-]{section.4}{PreProcessing}{}% 7
-\BOOKMARK [2][-]{subsection.4.1}{Network}{section.4}% 8
-\BOOKMARK [2][-]{subsection.4.2}{Determining Free Parameters}{section.4}% 9
-\BOOKMARK [1][-]{section.5}{Performance results}{}% 10
+\BOOKMARK [2][-]{subsection.3.1}{PreProcessing}{section.3}% 7
+\BOOKMARK [2][-]{subsection.3.2}{Network}{section.3}% 8
+\BOOKMARK [2][-]{subsection.3.3}{Determining Free Parameters}{section.3}% 9
+\BOOKMARK [1][-]{section.4}{Performance results}{}% 10
+\BOOKMARK [1][-]{section.5}{Wine Predictions}{}% 11
+\BOOKMARK [1][-]{section.6}{Conclusions}{}% 12

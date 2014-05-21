@@ -5,7 +5,7 @@ library(reshape2)
 library(lattice)
 
 # define our trainingSet class
-trainingInstance <- setClass("trainingInstance", slots=c(features="data.frame", expectedOutput="numeric"));
+trainingInstance <- setClass("trainingInstance", slots=c(features="numeric", expectedOutput="numeric"));
 
 truncateFeatures <- function(dataset, colsToKeep){
   return (dataset[colsToKeep])
@@ -178,4 +178,8 @@ getCumulativeSquaresValues <- function(reading){
   });
   
   return (cbind(reading[1], cumsums));
+}
+
+loadAllTrainingInstances <- function(){
+  return ();
 }
