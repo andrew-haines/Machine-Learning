@@ -4,9 +4,6 @@ library(grid)
 library(reshape2)  
 library(lattice)
 
-# define our trainingSet class
-trainingInstance <- setClass("trainingInstance", slots=c(features="numeric", expectedOutput="numeric"));
-
 truncateFeatures <- function(dataset, colsToKeep){
   return (dataset[colsToKeep])
 }

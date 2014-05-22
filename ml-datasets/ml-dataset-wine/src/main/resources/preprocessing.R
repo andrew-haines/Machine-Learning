@@ -5,6 +5,9 @@ TRAINING_DATA_LOCATION = paste(R_DATA, "training/", sep="");
 CALIBRATION_DATA_LOCATION = paste(R_DATA, "calibration/", sep="");
 EXPECTED_VALUES = read.table(paste(TRAINING_DATA_LOCATION, "true_values.dat", sep=""), quote="", header=F, comment.char="", sep=" ", stringsAsFactors=F);
 
+loadedData <- setClass("loadedData", slots=c(features="data.frame", expectedOutput="numeric"));
+
+
 calibration_baseline_Data1 <- read.table(paste(CALIBRATION_DATA_LOCATION, "4EG_1_0ppb.txt", sep=""), quote="", header=F, comment.char="", sep="\t", stringsAsFactors=F)
 calibration_baseline_Data2 <- read.table(paste(CALIBRATION_DATA_LOCATION, "4EG_2_0ppb.txt", sep=""), quote="", header=F, comment.char="", sep="\t", stringsAsFactors=F)
 calibration_baseline_Data3 <- read.table(paste(CALIBRATION_DATA_LOCATION, "4EP_1_0ppb.txt", sep=""), quote="", header=F, comment.char="", sep="\t", stringsAsFactors=F)
@@ -85,10 +88,12 @@ preProcessDataset <- function(dataset, desampleFreq){
   # now convert dataframe into a single vector of the data.
 
   processedDataset <- c(processedDataset, recursive=TRUE);
-  print(paste("preprocessed dataset from", originalDimensionality, "dimensions into ", length(processedDataset), "new dimensions"));
+  #print(paste("preprocessed dataset from", originalDimensionality, "dimensions into ", length(processedDataset), "new dimensions"));
   
   return (processedDataset);
 }
+
+trainingInstance <- setClass("trainingInstance", slots=c(features="numeric", expectedOutput="numeric"));
 
 loadTrainingInstance <- function(wineId){
   file <- list.files(TRAINING_DATA_LOCATION, paste("^",wineId,"_.._SAS.txt", sep=""), full.names=TRUE);
@@ -97,7 +102,7 @@ loadTrainingInstance <- function(wineId){
   
   expectedOutput <- EXPECTED_VALUES[EXPECTED_VALUES[1]==wineId];
   
-  trainingInst <- trainingInstance();
+  trainingInst <- loadedData();
   
   trainingInst@features <- instanceData;
   trainingInst@expectedOutput <- expectedOutput[2:3];
@@ -133,9 +138,10 @@ loadTrainingSet <- function(){
 
 preProcessAndEvaluateNetwork <- function(trainingInstances, k, n, lambda){
   preprocessedInstances <- sapply(trainingInstances, function(trainingInst){
-    trainingInst@features <- (preProcessDataset(trainingInst@features, n));
-    
-    return (trainingInst);
+    processedInstace <- trainingInstance();
+    processedInstace@features <- (preProcessDataset(trainingInst@features, n));
+    processedInstace@expectedOutput <- trainingInst@expectedOutput;
+    return (processedInstace);
   });
   
   print(paste("finished preprocessing", length(preprocessedInstances), "instances. Training network"));

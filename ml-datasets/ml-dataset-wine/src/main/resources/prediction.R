@@ -3,15 +3,16 @@ colNames <- c("time", "SY/LG","SY/G","SY/AA","SY/Gh","SY/gCTl","SY/gCT","T30/1",
 
 PREDICTION_DATA_LOCATION = paste(R_DATA, "prediction/", sep="");
 
+predictionLoadedData <- setClass("predictionLoadedData", slots=c(features="data.frame"));
+
 loadPredictionInstance <- function(wineId){
-  file <- list.files(TRAINING_DATA_LOCATION, paste("^",wineId,"_.._SAS.txt", sep=""), full.names=TRUE);
+  file <- list.files(PREDICTION_DATA_LOCATION, paste("^",wineId,"_.._PRED.txt", sep=""), full.names=TRUE);
   
   instanceData <- read.table(file, quote="", header=F, comment.char="", sep="\t", stringsAsFactors=F);
     
-  trainingInst <- trainingInstance();
+  trainingInst <- predictionLoadedData();
   
   trainingInst@features <- instanceData;
-  trainingInst@expectedOutput <- c();
   
   return (trainingInst);
 }
@@ -25,24 +26,24 @@ loadPredictionSet <- function(){
 }
 
 n <- 30;
-k <- 25;
-lambda <- 3;
+k <- 50; # as the network fails to find more then 7 prototypes, we set this value here.
+lambda <- 1;
 
 # first train network with all training instances
 preprocessedTrainingInstances <- sapply(loadTrainingSet(), function(trainingInst){
-  trainingInst@features <- (preProcessDataset(trainingInst@features, n));
   
-  return (trainingInst);
+  processedInstace <- trainingInstance();
+  processedInstace@features <- (preProcessDataset(trainingInst@features, n));
+  processedInstace@expectedOutput <- trainingInst@expectedOutput;
+  return (processedInstace);
 });
 
-network <- getTrainedRBFNetwork(preprocessedTrainingInstances, k, lambda, distanceMeasure, emptyPrototypesHandler, rbfFactory);
+network <- getTrainedRBFNetwork(preprocessedTrainingInstances, k, lambda, l2Norm, truncatingEmptyPrototypeHandler, gaussianRbfFactory);
 
 preprocessedInstances <- sapply(loadPredictionSet(), function(trainingInst){
-  trainingInst@features <- (preProcessDataset(trainingInst@features, n));
-  
-  return (trainingInst);
+  return (preProcessDataset(trainingInst@features, n));
 });
 
-predictions <- classifyInstance(preprocessedInstances, network);
+predictions <- classifyInstance(as.data.frame(t(preprocessedInstances)), network);
 
 predictions;

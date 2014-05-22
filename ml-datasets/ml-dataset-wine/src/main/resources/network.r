@@ -41,12 +41,21 @@ truncatingEmptyPrototypeHandler <- function(instances, k, distanceMeasure, proto
   return (prototypes[prototypeHasMembershipMask == TRUE]);
 }
 
+#This handler just returns the prototypes as is, assuming that they should have be move close enough
+# to the relevant cluster centers
+noopEmptyPrototypeHandler <- function(instances, k, distanceMeasure, prototypeHasMembershipMask, prototypes){
+  return (prototypes);
+}
+
+
 # this handler will recursively retry calculating the prototypes until every prototype has at least
 # one instance member. Note that, for large k, this could be very computationally intensive especially
 # if k ~ |instances|
 recalculateEmptyPrototypeHandler <- function(instances, k, distanceMeasure, prototypeHasMembershipMask, prototypePositions){
   if (nrow(instances) < k){
-    stop(paste("You do not have enough instances ",nrow(instances)," to spread over k=",k," prototypes", sep=""));
+    print(paste("WARNING: You do not have enough instances ",nrow(instances)," to spread over k=",k," prototypes. Fallingback to truncatingEmptyPrototypeHandler", sep=""));
+    
+    return (truncatingEmptyPrototypeHandler(instances, k, distanceMeasure, prototypeHasMembershipMask, prototypePositions))
   }
   return (getKMeansPrototypes(instances, k, distanceMeasure, recalculateEmptyPrototypeHandler));
 }
@@ -59,6 +68,12 @@ getKMeansPrototypes <- function(instances, k, distanceMeasure=l2Norm, emptyProto
     
     return (runif(k, min(featureExamples), max(featureExamples))); # for each feature, create a random value for each prototype between the min and max range of the provided feature examples for that feature.
   }));
+  
+#   shuffledInstances <- instances[sample(length(instances))];
+#   
+#   # then pick the first k as our starting instances.
+#   
+#   prototypePositions <- shuffledInstances[0:k,];
   
   colnames(prototypePositions) <- colnames(instances); # name the dimensions to aid debugging
   
@@ -135,7 +150,7 @@ getKMeansPrototypes <- function(instances, k, distanceMeasure=l2Norm, emptyProto
   });
   
   if (!all(prototypeHasMembers)){ # if we have not got all prototypes containing members then display notification.
-    #print("INFO Not all prototypes have members. Removing empty prototypes");
+    #print(paste("INFO Not all prototypes have members. Removing empty prototypes. Only", length(prototypeHasMembers[prototypeHasMembers==TRUE]), "prototypes have members"));
     
     prototypes <- emptyPrototypesHandler(instances, k, distanceMeasure, prototypeHasMembers, prototypes);
   }
